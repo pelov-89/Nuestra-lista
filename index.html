@@ -36,7 +36,7 @@
     }
 
     main {
-      max-width: 600px;
+      max-width: 650px;
       margin: 30px auto;
       padding: 0 20px;
     }
@@ -70,6 +70,17 @@
       cursor: pointer;
     }
 
+    .category {
+      margin-bottom: 18px;
+    }
+
+    .category-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      padding-left: 5px;
+    }
+
     .list {
       background: white;
       border-radius: 15px;
@@ -87,7 +98,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 15px 10px;
+      padding: 14px 10px;
       border-bottom: 1px solid #eee;
     }
 
@@ -123,6 +134,12 @@
       text-decoration: line-through;
       color: #999;
     }
+
+    .category-name {
+      color: #555;
+      font-size: 13px;
+      margin-left: 5px;
+    }
   </style>
 </head>
 
@@ -148,12 +165,99 @@
       </button>
     </div>
 
-    <div class="list" id="shoppingList"></div>
+    <div id="shoppingList"></div>
 
   </main>
 
   <script>
     let products = JSON.parse(localStorage.getItem("nuestraLista")) || [];
+
+    function getCategory(product) {
+      const text = product.toLowerCase();
+
+      if (
+        text.includes("leche") ||
+        text.includes("yogur") ||
+        text.includes("yogurt") ||
+        text.includes("queso") ||
+        text.includes("mantequilla") ||
+        text.includes("nata")
+      ) {
+        return "🥛 Lácteos";
+      }
+
+      if (
+        text.includes("pollo") ||
+        text.includes("carne") ||
+        text.includes("ternera") ||
+        text.includes("cerdo") ||
+        text.includes("hamburguesa") ||
+        text.includes("salchicha")
+      ) {
+        return "🥩 Carnicería";
+      }
+
+      if (
+        text.includes("pescado") ||
+        text.includes("atún") ||
+        text.includes("atun") ||
+        text.includes("salmón") ||
+        text.includes("salmon") ||
+        text.includes("gamba") ||
+        text.includes("marisco")
+      ) {
+        return "🐟 Pescadería";
+      }
+
+      if (
+        text.includes("manzana") ||
+        text.includes("plátano") ||
+        text.includes("platano") ||
+        text.includes("naranja") ||
+        text.includes("pera") ||
+        text.includes("tomate") ||
+        text.includes("lechuga") ||
+        text.includes("patata") ||
+        text.includes("cebolla") ||
+        text.includes("zanahoria")
+      ) {
+        return "🍎 Fruta y verdura";
+      }
+
+      if (
+        text.includes("pan") ||
+        text.includes("barra") ||
+        text.includes("croissant") ||
+        text.includes("magdalena")
+      ) {
+        return "🥖 Panadería";
+      }
+
+      if (
+        text.includes("agua") ||
+        text.includes("coca") ||
+        text.includes("refresco") ||
+        text.includes("zumo") ||
+        text.includes("cerveza")
+      ) {
+        return "🥤 Bebidas";
+      }
+
+      if (
+        text.includes("detergente") ||
+        text.includes("lejía") ||
+        text.includes("lejia") ||
+        text.includes("lavavajillas") ||
+        text.includes("suavizante") ||
+        text.includes("limpiador") ||
+        text.includes("papel higiénico") ||
+        text.includes("papel higienico")
+      ) {
+        return "🧽 Limpieza y hogar";
+      }
+
+      return "🛍️ Otros";
+    }
 
     function saveProducts() {
       localStorage.setItem("nuestraLista", JSON.stringify(products));
@@ -166,32 +270,67 @@
 
       if (products.length === 0) {
         list.innerHTML = `
-          <div class="empty">
-            Tu lista está vacía 🛒
+          <div class="list">
+            <div class="empty">
+              Tu lista está vacía 🛒
+            </div>
           </div>
         `;
         return;
       }
 
+      const categories = {};
+
       products.forEach((product, index) => {
-        const item = document.createElement("div");
-        item.className = "item";
+        const category = getCategory(product.name);
 
-        item.innerHTML = `
-          <button class="check-button" onclick="toggleProduct(${index})">
-            ${product.completed ? "✓" : ""}
-          </button>
+        if (!categories[category]) {
+          categories[category] = [];
+        }
 
-          <span class="${product.completed ? "completed" : ""}">
-            ${escapeHtml(product.name)}
-          </span>
+        categories[category].push({
+          product,
+          index
+        });
+      });
 
-          <button class="delete-button" onclick="deleteProduct(${index})">
-            🗑️
-          </button>
+      Object.keys(categories).forEach(category => {
+
+        const categoryBox = document.createElement("div");
+        categoryBox.className = "category";
+
+        categoryBox.innerHTML = `
+          <div class="category-title">
+            ${category}
+          </div>
+          <div class="list"></div>
         `;
 
-        list.appendChild(item);
+        const categoryList = categoryBox.querySelector(".list");
+
+        categories[category].forEach(({ product, index }) => {
+
+          const item = document.createElement("div");
+          item.className = "item";
+
+          item.innerHTML = `
+            <button class="check-button" onclick="toggleProduct(${index})">
+              ${product.completed ? "✓" : ""}
+            </button>
+
+            <span class="${product.completed ? "completed" : ""}">
+              ${escapeHtml(product.name)}
+            </span>
+
+            <button class="delete-button" onclick="deleteProduct(${index})">
+              🗑️
+            </button>
+          `;
+
+          categoryList.appendChild(item);
+        });
+
+        list.appendChild(categoryBox);
       });
     }
 
