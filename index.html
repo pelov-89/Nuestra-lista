@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuestra Lista</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+
+    header {
+      background: #ffffff;
+      padding: 25px 20px 15px;
+      text-align: center;
+      border-bottom: 1px solid #ddd;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #666;
+      font-size: 15px;
+    }
+
+    main {
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .add-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+    }
+
+    input {
+      flex: 1;
+      padding: 14px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 14px 18px;
+      background: #222;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.85;
+    }
+
+    .list {
+      background: white;
+      border-radius: 15px;
+      padding: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .empty {
+      text-align: center;
+      color: #888;
+      padding: 30px 10px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 10px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .item:last-child {
+      border-bottom: none;
+    }
+
+    .item span {
+      flex: 1;
+      font-size: 17px;
+    }
+
+    .item button {
+      background: #eee;
+      color: #333;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: #999;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>🛒 Nuestra Lista</h1>
+    <div class="subtitle">La compra, juntos y sin olvidos.</div>
+  </header>
+
+  <main>
+
+    <div class="add-box">
+      <input
+        type="text"
+        id="productInput"
+        placeholder="¿Qué necesitamos?"
+      >
+      <button onclick="addProduct()">Añadir</button>
+    </div>
+
+    <
