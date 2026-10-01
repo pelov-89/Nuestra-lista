@@ -18,8 +18,8 @@
     }
 
     header {
-      background: #ffffff;
-      padding: 25px 20px 15px;
+      background: white;
+      padding: 28px 20px 20px;
       text-align: center;
       border-bottom: 1px solid #ddd;
     }
@@ -53,9 +53,14 @@
       border: 1px solid #ccc;
       border-radius: 10px;
       font-size: 16px;
+      outline: none;
     }
 
-    button {
+    input:focus {
+      border-color: #222;
+    }
+
+    .add-button {
       border: none;
       border-radius: 10px;
       padding: 14px 18px;
@@ -63,10 +68,6 @@
       color: white;
       font-size: 16px;
       cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.85;
     }
 
     .list {
@@ -99,11 +100,23 @@
       font-size: 17px;
     }
 
-    .item button {
+    .check-button {
+      border: none;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
       background: #eee;
       color: #333;
-      padding: 8px 12px;
-      font-size: 14px;
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .delete-button {
+      border: none;
+      background: transparent;
+      color: #999;
+      cursor: pointer;
+      font-size: 18px;
     }
 
     .completed {
@@ -127,8 +140,109 @@
         type="text"
         id="productInput"
         placeholder="¿Qué necesitamos?"
+        onkeydown="handleKey(event)"
       >
-      <button onclick="addProduct()">Añadir</button>
+
+      <button class="add-button" onclick="addProduct()">
+        Añadir
+      </button>
     </div>
 
-    <
+    <div class="list" id="shoppingList"></div>
+
+  </main>
+
+  <script>
+    let products = JSON.parse(localStorage.getItem("nuestraLista")) || [];
+
+    function saveProducts() {
+      localStorage.setItem("nuestraLista", JSON.stringify(products));
+    }
+
+    function renderList() {
+      const list = document.getElementById("shoppingList");
+
+      list.innerHTML = "";
+
+      if (products.length === 0) {
+        list.innerHTML = `
+          <div class="empty">
+            Tu lista está vacía 🛒
+          </div>
+        `;
+        return;
+      }
+
+      products.forEach((product, index) => {
+        const item = document.createElement("div");
+        item.className = "item";
+
+        item.innerHTML = `
+          <button class="check-button" onclick="toggleProduct(${index})">
+            ${product.completed ? "✓" : ""}
+          </button>
+
+          <span class="${product.completed ? "completed" : ""}">
+            ${escapeHtml(product.name)}
+          </span>
+
+          <button class="delete-button" onclick="deleteProduct(${index})">
+            🗑️
+          </button>
+        `;
+
+        list.appendChild(item);
+      });
+    }
+
+    function addProduct() {
+      const input = document.getElementById("productInput");
+      const name = input.value.trim();
+
+      if (name === "") {
+        return;
+      }
+
+      products.push({
+        name: name,
+        completed: false
+      });
+
+      saveProducts();
+      renderList();
+
+      input.value = "";
+      input.focus();
+    }
+
+    function toggleProduct(index) {
+      products[index].completed = !products[index].completed;
+
+      saveProducts();
+      renderList();
+    }
+
+    function deleteProduct(index) {
+      products.splice(index, 1);
+
+      saveProducts();
+      renderList();
+    }
+
+    function handleKey(event) {
+      if (event.key === "Enter") {
+        addProduct();
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    renderList();
+  </script>
+
+</body>
+</html>
