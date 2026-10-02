@@ -242,7 +242,7 @@ const SUPABASE_URL = "https://hnytuqklpuhiqeapkykx.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
 ";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-     let products = JSON.parse(localStorage.getItem("nuestraLista")) || [];
+     let products = [];
     
     function getCategory(product) {
       const text = product.toLowerCase();
@@ -331,9 +331,7 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
       return "🛍️ Otros";
     }
 
-    function saveProducts() {
-      localStorage.setItem("nuestraLista", JSON.stringify(products));
-    }
+    
 
     function renderList() {
       const list = document.getElementById("shoppingList");
@@ -406,39 +404,71 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
       });
     }
 
-    function addProduct() {
-      const input = document.getElementById("productInput");
-      const name = input.value.trim();
+ async function addProduct() {
+  const input = document.getElementById("productInput");
+  const name = input.value.trim();
 
-      if (name === "") {
-        return;
-      }
+  if (name === "") {
+    return;
+  }
 
-      products.push({
-        name: name,
-        completed: false
-      });
+  const { data, error } = await supabaseClient
+    .from("Productos")
+    .insert({
+      Nombre: name,
+      Cantidad: 1,
+      Categoria: getCategory(name),
+      Comprado: false,
+      list_id: "59d10737-51e8-4edf-9217-63e25a5f4a6b"
+    })
+    .select()
+    .single();
 
-      saveProducts();
-      renderList();
+  if (error) {
+    console.error("Error al añadir producto:", error);
+    alert("No se pudo añadir el producto.");
+    return;
+  }
 
-      input.value = "";
-      input.focus();
-    }
+  input.value = "";
+  input.focus();
+  --await loadProducts();
+}
 
-    function toggleProduct(index) {
-      products[index].completed = !products[index].completed;
+async function toggleProduct(index) {
+  const product = products[index];
+  const newCompleted = !product.completed;
 
-      saveProducts();
-      renderList();
-    }
+  const { error } = await supabaseClient
+    .from("Productos")
+    .update({ Comprado: newCompleted })
+    .eq("id", product.id);
 
-    function deleteProduct(index) {
-      products.splice(index, 1);
+  if (error) {
+    console.error("Error al actualizar producto:", error);
+    alert("No se pudo actualizar el producto.");
+    return;
+  }
 
-      saveProducts();
-      renderList();
-    }
+  await loadProducts();
+}
+
+ async function deleteProduct(index) {
+  const product = products[index];
+
+  const { error } = await supabaseClient
+    .from("Productos")
+    .delete()
+    .eq("id", product.id);
+
+  if (error) {
+    console.error("Error al borrar producto:", error);
+    alert("No se pudo borrar el producto.");
+    return;
+  }
+
+  await loadProducts();
+}
 
     function handleKey(event) {
       if (event.key === "Enter") {
@@ -452,7 +482,27 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
       return div.innerHTML;
     }
 
-    renderList();
+    async function loadProducts() {
+  const { data, error } = await supabaseClient
+    .from("Productos")
+    .select("*")
+    .eq("list_id", "59d10737-51e8-4edf-9217-63e25a5f4a6b");
+
+  if (error) {
+    console.error("Error al cargar productos:", error);
+    return;
+  }
+
+  products = data.map(product => ({
+    id: product.id,
+    name: product.Nombre,
+    completed: product.Comprado
+  }));
+
+  renderList();
+}
+
+loadProducts();
   </script>
 
 </body>
