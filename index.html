@@ -578,6 +578,7 @@
       products = (data || []).map(product => ({
         id: product.id,
         name: product.Nombre,
+        quantity: product.Cantidad || 1,
         completed: product.Comprado
       }));
 
@@ -642,9 +643,12 @@
               ${product.completed ? "✓" : ""}
             </button>
 
-            <span class="${product.completed ? "completed" : ""}">
-              ${escapeHtml(product.name)}
-            </span>
+<span class="${product.completed ? "completed" : ""}">
+  ${escapeHtml(product.name)}
+  <button onclick="changeQuantity(${index}, -1)">−</button>
+  <span>×${product.quantity}</span>
+  <button onclick="changeQuantity(${index}, 1)">+</button>
+</span>
 
             <button
               class="delete-button"
@@ -691,7 +695,25 @@
 
       await loadProducts();
     }
+async function changeQuantity(index, change) {
+  const product = products[index];
+  if (!product) return;
 
+  const newQuantity = Math.max(1, product.quantity + change);
+
+  const { error } = await supabaseClient
+    .from("Productos")
+    .update({ Cantidad: newQuantity })
+    .eq("id", product.id)
+    .eq("list_id", LIST_ID);
+
+  if (error) {
+    console.error("Error al cambiar cantidad:", error);
+    return;
+  }
+
+  await loadProducts();
+}
     async function toggleProduct(index) {
       const product = products[index];
 
