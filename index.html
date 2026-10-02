@@ -762,6 +762,22 @@
       }
     }
 
+   supabaseClient
+  .channel("productos-realtime")
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "Productos",
+      filter: `list_id=eq.${LIST_ID}`
+    },
+    () => {
+      loadProducts();
+    }
+  )
+  .subscribe();
+    
     supabaseClient.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
         products = [];
