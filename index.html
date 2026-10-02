@@ -5,208 +5,301 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nuestra Lista</title>
 
-<style>
-  * {
-    box-sizing: border-box;
-  }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  :root {
-    --green: #16a34a;
-    --green-dark: #15803d;
-    --green-soft: #dcfce7;
-    --background: #f6f8f7;
-    --card: #ffffff;
-    --text: #18201c;
-    --muted: #6b7280;
-    --border: #e5e7eb;
-  }
+    :root {
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --green-soft: #dcfce7;
+      --background: #f6f8f7;
+      --card: #ffffff;
+      --text: #18201c;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #dc2626;
+    }
 
-  body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: Arial, sans-serif;
-    background: var(--background);
-    color: var(--text);
-  }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: var(--background);
+      color: var(--text);
+    }
 
-  header {
-    background: linear-gradient(135deg, #15803d, #22c55e);
-    color: white;
-    padding: 38px 20px 54px;
-    text-align: center;
-    border: none;
-  }
-
-  h1 {
-    margin: 0;
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -0.8px;
-  }
-
-  .subtitle {
-    margin-top: 8px;
-    color: rgba(255,255,255,0.88);
-    font-size: 15px;
-  }
-
-  main {
-    max-width: 650px;
-    margin: -24px auto 40px;
-    padding: 0 16px;
-  }
-
-  .add-box {
-    display: flex;
-    gap: 9px;
-    padding: 10px;
-    margin-bottom: 26px;
-    background: white;
-    border-radius: 18px;
-    box-shadow: 0 8px 28px rgba(0,0,0,0.10);
-  }
-
-  input {
-    flex: 1;
-    min-width: 0;
-    padding: 15px 14px;
-    border: none;
-    border-radius: 12px;
-    background: #f3f4f6;
-    font-size: 16px;
-    outline: none;
-    color: var(--text);
-  }
-
-  input:focus {
-    background: white;
-    box-shadow: inset 0 0 0 2px var(--green);
-  }
-
-  .add-button {
-    border: none;
-    border-radius: 12px;
-    padding: 14px 18px;
-    background: var(--green);
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-
-  .add-button:active {
-    transform: scale(0.97);
-    background: var(--green-dark);
-  }
-
-  .category {
-    margin-bottom: 22px;
-  }
-
-  .category-title {
-    font-size: 17px;
-    font-weight: 800;
-    margin: 0 0 9px 5px;
-    color: #374151;
-  }
-
-  .list {
-    background: var(--card);
-    border-radius: 18px;
-    padding: 5px 12px;
-    box-shadow: 0 3px 16px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.03);
-    overflow: hidden;
-  }
-
-  .empty {
-    text-align: center;
-    color: var(--muted);
-    padding: 42px 10px;
-    font-size: 16px;
-  }
-
-  .item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 62px;
-    padding: 10px 3px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .item:last-child {
-    border-bottom: none;
-  }
-
-  .item span {
-    flex: 1;
-    font-size: 17px;
-    font-weight: 500;
-  }
-
-  .check-button {
-    flex-shrink: 0;
-    border: 2px solid #d1d5db;
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
-    background: white;
-    color: white;
-    cursor: pointer;
-    font-size: 19px;
-    font-weight: bold;
-  }
-
-  .item:has(.completed) .check-button {
-    border-color: var(--green);
-    background: var(--green);
-  }
-
-  .delete-button {
-    border: none;
-    background: transparent;
-    color: #9ca3af;
-    cursor: pointer;
-    font-size: 18px;
-    padding: 8px;
-  }
-
-  .completed {
-    text-decoration: line-through;
-    color: #9ca3af;
-  }
-
-  .category-name {
-    color: var(--muted);
-    font-size: 13px;
-    margin-left: 5px;
-  }
-
-  @media (max-width: 480px) {
     header {
-      padding-top: 30px;
-      padding-bottom: 48px;
+      background: linear-gradient(135deg, #15803d, #22c55e);
+      color: white;
+      padding: 38px 20px 54px;
+      text-align: center;
     }
 
     h1 {
-      font-size: 29px;
+      margin: 0;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.8px;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: rgba(255,255,255,0.88);
+      font-size: 15px;
     }
 
     main {
-      padding: 0 12px;
+      max-width: 650px;
+      margin: -24px auto 40px;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+    }
+
+    /* LOGIN */
+
+    #loginView {
+      max-width: 430px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .login-title {
+      margin: 0 0 6px;
+      font-size: 23px;
+      text-align: center;
+    }
+
+    .login-text {
+      margin: 0 0 22px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f3f4f6;
+      font-size: 16px;
+      outline: none;
+      color: var(--text);
+    }
+
+    input:focus {
+      background: white;
+      border-color: var(--green);
+      box-shadow: 0 0 0 2px var(--green-soft);
+    }
+
+    .primary-button {
+      border: none;
+      border-radius: 12px;
+      padding: 15px 18px;
+      background: var(--green);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .primary-button:active {
+      transform: scale(0.98);
+      background: var(--green-dark);
+    }
+
+    .login-error {
+      min-height: 18px;
+      margin-top: 12px;
+      color: var(--danger);
+      text-align: center;
+      font-size: 14px;
+    }
+
+    /* APP */
+
+    #appView {
+      display: none;
+    }
+
+    .user-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 11px 14px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+    }
+
+    .user-email {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .logout-button {
+      flex-shrink: 0;
+      border: none;
+      background: transparent;
+      color: var(--green-dark);
+      font-weight: 700;
+      cursor: pointer;
     }
 
     .add-box {
-      gap: 7px;
-      padding: 8px;
+      display: flex;
+      gap: 9px;
+      padding: 10px;
+      margin-bottom: 26px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+    }
+
+    .add-box input {
+      flex: 1;
+      min-width: 0;
+      border: none;
     }
 
     .add-button {
-      padding: 13px 15px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      background: var(--green);
+      color: white;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
     }
-  }
-</style>
+
+    .category {
+      margin-bottom: 22px;
+    }
+
+    .category-title {
+      font-size: 17px;
+      font-weight: 800;
+      margin: 0 0 9px 5px;
+      color: #374151;
+    }
+
+    .list {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 5px 12px;
+      box-shadow: 0 3px 16px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+
+    .empty,
+    .loading {
+      text-align: center;
+      color: var(--muted);
+      padding: 42px 10px;
+      font-size: 16px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 62px;
+      padding: 10px 3px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .item:last-child {
+      border-bottom: none;
+    }
+
+    .item span {
+      flex: 1;
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    .check-button {
+      flex-shrink: 0;
+      border: 2px solid #d1d5db;
+      border-radius: 50%;
+      width: 34px;
+      height: 34px;
+      background: white;
+      color: white;
+      cursor: pointer;
+      font-size: 19px;
+      font-weight: bold;
+    }
+
+    .item:has(.completed) .check-button {
+      border-color: var(--green);
+      background: var(--green);
+    }
+
+    .delete-button {
+      border: none;
+      background: transparent;
+      color: #9ca3af;
+      cursor: pointer;
+      font-size: 18px;
+      padding: 8px;
+    }
+
+    .completed {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    @media (max-width: 480px) {
+      header {
+        padding-top: 30px;
+        padding-bottom: 48px;
+      }
+
+      h1 {
+        font-size: 29px;
+      }
+
+      main {
+        padding: 0 12px;
+      }
+
+      #loginView {
+        padding: 22px 18px;
+      }
+
+      .add-box {
+        gap: 7px;
+        padding: 8px;
+      }
+
+      .add-button {
+        padding: 13px 15px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -218,32 +311,92 @@
 
   <main>
 
-    <div class="add-box">
-      <input
-        type="text"
-        id="productInput"
-        placeholder="¿Qué necesitamos?"
-        onkeydown="handleKey(event)"
-      >
+    <!-- INICIO DE SESIÓN -->
+    <section id="loginView" class="card">
+      <h2 class="login-title">Bienvenido 👋</h2>
+      <p class="login-text">
+        Inicia sesión para acceder a vuestra lista compartida.
+      </p>
 
-      <button class="add-button" onclick="addProduct()">
-        Añadir
-      </button>
-    </div>
+      <div class="login-form">
+        <input
+          type="email"
+          id="emailInput"
+          placeholder="Correo electrónico"
+          autocomplete="email"
+        >
 
-    <div id="shoppingList"></div>
+        <input
+          type="password"
+          id="passwordInput"
+          placeholder="Contraseña"
+          autocomplete="current-password"
+          onkeydown="handleLoginKey(event)"
+        >
+
+        <button
+          id="loginButton"
+          class="primary-button"
+          onclick="login()"
+        >
+          Iniciar sesión
+        </button>
+      </div>
+
+      <div id="loginError" class="login-error"></div>
+    </section>
+
+    <!-- LISTA -->
+    <section id="appView">
+
+      <div class="user-bar">
+        <span id="userEmail" class="user-email"></span>
+        <button class="logout-button" onclick="logout()">
+          Cerrar sesión
+        </button>
+      </div>
+
+      <div class="add-box">
+        <input
+          type="text"
+          id="productInput"
+          placeholder="¿Qué necesitamos?"
+          onkeydown="handleProductKey(event)"
+        >
+
+        <button class="add-button" onclick="addProduct()">
+          Añadir
+        </button>
+      </div>
+
+      <div id="shoppingList">
+        <div class="list">
+          <div class="loading">Cargando lista...</div>
+        </div>
+      </div>
+
+    </section>
 
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script>
-   
-const SUPABASE_URL = "https://hnytuqklpuhiqeapkykx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
+    const SUPABASE_URL =
+      "https://hnytuqklpuhiqeapkykx.supabase.co";
+
+    const SUPABASE_KEY =
+      "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
 ";
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-     let products = [];
-    
+
+    const LIST_ID =
+      "59d10737-51e8-4edf-9217-63e25a5f4a6b";
+
+    const supabaseClient =
+      supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let products = [];
+
     function getCategory(product) {
       const text = product.toLowerCase();
 
@@ -331,7 +484,105 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
       return "🛍️ Otros";
     }
 
-    
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showLogin() {
+      document.getElementById("loginView").style.display = "block";
+      document.getElementById("appView").style.display = "none";
+    }
+
+    function showApp(user) {
+      document.getElementById("loginView").style.display = "none";
+      document.getElementById("appView").style.display = "block";
+      document.getElementById("userEmail").textContent = user.email || "";
+    }
+
+    async function login() {
+      const emailInput = document.getElementById("emailInput");
+      const passwordInput = document.getElementById("passwordInput");
+      const loginButton = document.getElementById("loginButton");
+      const errorBox = document.getElementById("loginError");
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      errorBox.textContent = "";
+
+      if (!email || !password) {
+        errorBox.textContent = "Introduce tu correo y contraseña.";
+        return;
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent = "Entrando...";
+
+      const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+          email,
+          password
+        });
+
+      loginButton.disabled = false;
+      loginButton.textContent = "Iniciar sesión";
+
+      if (error) {
+        console.error("Error de inicio de sesión:", error);
+        errorBox.textContent =
+          "No se ha podido iniciar sesión. Revisa el correo y la contraseña.";
+        return;
+      }
+
+      passwordInput.value = "";
+
+      showApp(data.user);
+      await loadProducts();
+    }
+
+    async function logout() {
+      await supabaseClient.auth.signOut();
+      products = [];
+      showLogin();
+    }
+
+    async function loadProducts() {
+      const list = document.getElementById("shoppingList");
+
+      list.innerHTML = `
+        <div class="list">
+          <div class="loading">Cargando lista...</div>
+        </div>
+      `;
+
+      const { data, error } = await supabaseClient
+        .from("Productos")
+        .select("id, Nombre, Cantidad, Categoria, Comprado, list_id")
+        .eq("list_id", LIST_ID);
+
+      if (error) {
+        console.error("Error al cargar productos:", error);
+
+        list.innerHTML = `
+          <div class="list">
+            <div class="empty">
+              No se ha podido cargar la lista.
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      products = (data || []).map(product => ({
+        id: product.id,
+        name: product.Nombre,
+        completed: product.Comprado
+      }));
+
+      renderList();
+    }
 
     function renderList() {
       const list = document.getElementById("shoppingList");
@@ -365,7 +616,6 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
       });
 
       Object.keys(categories).forEach(category => {
-
         const categoryBox = document.createElement("div");
         categoryBox.className = "category";
 
@@ -376,15 +626,19 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
           <div class="list"></div>
         `;
 
-        const categoryList = categoryBox.querySelector(".list");
+        const categoryList =
+          categoryBox.querySelector(".list");
 
         categories[category].forEach(({ product, index }) => {
-
           const item = document.createElement("div");
           item.className = "item";
 
           item.innerHTML = `
-            <button class="check-button" onclick="toggleProduct(${index})">
+            <button
+              class="check-button"
+              onclick="toggleProduct(${index})"
+              aria-label="Marcar producto"
+            >
               ${product.completed ? "✓" : ""}
             </button>
 
@@ -392,7 +646,11 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
               ${escapeHtml(product.name)}
             </span>
 
-            <button class="delete-button" onclick="deleteProduct(${index})">
+            <button
+              class="delete-button"
+              onclick="deleteProduct(${index})"
+              aria-label="Borrar producto"
+            >
               🗑️
             </button>
           `;
@@ -404,105 +662,115 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
       });
     }
 
- async function addProduct() {
-  const input = document.getElementById("productInput");
-  const name = input.value.trim();
+    async function addProduct() {
+      const input = document.getElementById("productInput");
+      const name = input.value.trim();
 
-  if (name === "") {
-    return;
-  }
+      if (!name) {
+        return;
+      }
 
-  const { data, error } = await supabaseClient
-    .from("Productos")
-    .insert({
-      Nombre: name,
-      Cantidad: 1,
-      Categoria: getCategory(name),
-      Comprado: false,
-      list_id: "59d10737-51e8-4edf-9217-63e25a5f4a6b"
-    })
-    .select()
-    .single();
+      const { error } = await supabaseClient
+        .from("Productos")
+        .insert({
+          Nombre: name,
+          Cantidad: 1,
+          Categoria: getCategory(name),
+          Comprado: false,
+          list_id: LIST_ID
+        });
 
-  if (error) {
-    console.error("Error al añadir producto:", error);
-    alert("No se pudo añadir el producto.");
-    return;
-  }
+      if (error) {
+        console.error("Error al añadir producto:", error);
+        alert("No se pudo añadir el producto.");
+        return;
+      }
 
-  input.value = "";
-  input.focus();
-  --await loadProducts();
-}
+      input.value = "";
+      input.focus();
 
-async function toggleProduct(index) {
-  const product = products[index];
-  const newCompleted = !product.completed;
+      await loadProducts();
+    }
 
-  const { error } = await supabaseClient
-    .from("Productos")
-    .update({ Comprado: newCompleted })
-    .eq("id", product.id);
+    async function toggleProduct(index) {
+      const product = products[index];
 
-  if (error) {
-    console.error("Error al actualizar producto:", error);
-    alert("No se pudo actualizar el producto.");
-    return;
-  }
+      if (!product) {
+        return;
+      }
 
-  await loadProducts();
-}
+      const { error } = await supabaseClient
+        .from("Productos")
+        .update({
+          Comprado: !product.completed
+        })
+        .eq("id", product.id)
+        .eq("list_id", LIST_ID);
 
- async function deleteProduct(index) {
-  const product = products[index];
+      if (error) {
+        console.error("Error al actualizar producto:", error);
+        alert("No se pudo actualizar el producto.");
+        return;
+      }
 
-  const { error } = await supabaseClient
-    .from("Productos")
-    .delete()
-    .eq("id", product.id);
+      await loadProducts();
+    }
 
-  if (error) {
-    console.error("Error al borrar producto:", error);
-    alert("No se pudo borrar el producto.");
-    return;
-  }
+    async function deleteProduct(index) {
+      const product = products[index];
 
-  await loadProducts();
-}
+      if (!product) {
+        return;
+      }
 
-    function handleKey(event) {
+      const { error } = await supabaseClient
+        .from("Productos")
+        .delete()
+        .eq("id", product.id)
+        .eq("list_id", LIST_ID);
+
+      if (error) {
+        console.error("Error al borrar producto:", error);
+        alert("No se pudo borrar el producto.");
+        return;
+      }
+
+      await loadProducts();
+    }
+
+    function handleLoginKey(event) {
+      if (event.key === "Enter") {
+        login();
+      }
+    }
+
+    function handleProductKey(event) {
       if (event.key === "Enter") {
         addProduct();
       }
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      return div.innerHTML;
+    async function startApp() {
+      const {
+        data: { session }
+      } = await supabaseClient.auth.getSession();
+
+      if (session && session.user) {
+        showApp(session.user);
+        await loadProducts();
+      } else {
+        showLogin();
+      }
     }
 
-    async function loadProducts() {
-  const { data, error } = await supabaseClient
-    .from("Productos")
-    .select("*")
-    .eq("list_id", "59d10737-51e8-4edf-9217-63e25a5f4a6b");
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        products = [];
+        showLogin();
+      }
+    });
 
-  if (error) {
-    console.error("Error al cargar productos:", error);
-    return;
-  }
-
-  products = data.map(product => ({
-    id: product.id,
-    name: product.Nombre,
-    completed: product.Comprado
-  }));
-
-  renderList();
-}
-
-loadProducts();
+    startApp();
   </script>
 
 </body>
