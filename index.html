@@ -243,6 +243,7 @@ const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN
 ";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
      let products = JSON.parse(localStorage.getItem("nuestraLista")) || [];
+    
     function getCategory(product) {
       const text = product.toLowerCase();
 
