@@ -67,6 +67,10 @@
     .favorite-button.active { color:var(--yellow); }
     .delete-button { color:#9ca3af; }
     .empty,.loading { padding:40px 10px; text-align:center; color:var(--muted); }
+
+    .supermarket-section { margin-bottom:24px; }
+    .supermarket-title { margin:0 0 9px 5px; font-size:18px; font-weight:800; color:var(--green-dark); }
+    .supermarket-select { border:0; border-radius:8px; padding:6px 7px; background:#eef7f0; color:#374151; font-size:12px; max-width:145px; }
     @media(max-width:480px) { header { padding-top:29px; } h1 { font-size:29px; } main { padding:0 11px; } }
   </style>
 </head>
@@ -107,6 +111,7 @@ let products = [], currentUser = null, learnedProducts = [];
 const basicProducts = ["Leche","Pan","Huevos","Agua","Tomate","Patatas","Cebolla","Lechuga","Fresas","Manzanas","Plátanos","Naranjas","Peras","Limón","Aguacate","Pimiento","Pepino","Calabacín","Pollo","Carne","Salmón","Atún","Yogur","Queso","Mantequilla","Arroz","Pasta","Café","Azúcar","Aceite","Sal","Coca-Cola","Zumo","Papel higiénico","Detergente","Suavizante","Lavavajillas"];
 
 const categoryOrder = ["🍎 Fruta y verdura","🥛 Lácteos","🥩 Carnicería","🐟 Pescadería","🥖 Panadería","🥫 Despensa","🥤 Bebidas","🧽 Limpieza y hogar","🛍️ Otros"];
+const supermarkets = ["Sin asignar","Supercarmela","Cash Silva","DIA","Mercadona","Covirán","Lidl","Carrefour","Aldi"];
 
 function getCategory(product) {
  const text=(product||"").toLowerCase();
@@ -180,20 +185,57 @@ function renderQuickProducts(){
 function renderList(){
  const list=document.getElementById("shoppingList");list.innerHTML="";updateSummary();
  if(!products.length){list.innerHTML='<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';return;}
- const categories={};products.forEach((product,index)=>{const category=getCategory(product.name);if(!categories[category])categories[category]=[];categories[category].push({product,index});});
- categoryOrder.filter(c=>categories[c]).forEach(category=>{
-   const box=document.createElement("div");box.className="category";box.innerHTML=`<div class="category-title">${category}</div><div class="list"></div>`;
-   const categoryList=box.querySelector(".list");
-   categories[category].forEach(({product,index})=>{
-    const item=document.createElement("div");item.className="item"+(product.completed?" checked":"");
-    let addedText="";if(product.addedBy)addedText=product.addedBy===currentUser?.id?"Añadido por ti":"Añadido por otro miembro";
-    const priceText=product.price>0?`${product.price.toFixed(2).replace(".",",")} € ud.`:"Añadir precio";
-    item.innerHTML=`<button class="check-button" onclick="toggleProduct(${index})">${product.completed?"✓":""}</button>
-    <div class="product-info"><div class="product-name ${product.completed?"completed":""}">${escapeHtml(product.name)}</div><div class="product-meta">${escapeHtml(addedText)}</div>
-    <div class="controls"><button class="qty-button" onclick="changeQuantity(${index},-1)">−</button><span class="quantity">×${product.quantity}</span><button class="qty-button" onclick="changeQuantity(${index},1)">+</button><button class="price-button" onclick="setPrice(${index})">${priceText}</button></div></div>
-    <button class="favorite-button ${product.favorite?"active":""}" onclick="toggleFavorite(${index})" aria-label="Favorito">★</button><button class="delete-button" onclick="deleteProduct(${index})" aria-label="Borrar">🗑️</button>`;
-    categoryList.appendChild(item);
-   });list.appendChild(box);
+
+ // Primero agrupamos por supermercado y, dentro de cada uno, por categoría.
+ const groups={};
+ products.forEach((product,index)=>{
+   const supermarket=(product.supermarket||"").trim()||"Sin asignar";
+   const category=getCategory(product.name);
+   if(!groups[supermarket])groups[supermarket]={};
+   if(!groups[supermarket][category])groups[supermarket][category]=[];
+   groups[supermarket][category].push({product,index});
+ });
+
+ const supermarketOrder=[...supermarkets,...Object.keys(groups).filter(x=>!supermarkets.includes(x))];
+
+ supermarketOrder.filter(s=>groups[s]).forEach(supermarket=>{
+   const supermarketBox=document.createElement("section");
+   supermarketBox.className="supermarket-section";
+   supermarketBox.innerHTML=`<div class="supermarket-title">🏪 ${escapeHtml(supermarket)}</div>`;
+   const categoryGroups=groups[supermarket];
+
+   categoryOrder.filter(c=>categoryGroups[c]).forEach(category=>{
+     const box=document.createElement("div");box.className="category";
+     box.innerHTML=`<div class="category-title">${category}</div><div class="list"></div>`;
+     const categoryList=box.querySelector(".list");
+
+     categoryGroups[category].forEach(({product,index})=>{
+       const item=document.createElement("div");item.className="item"+(product.completed?" checked":"");
+       let addedText="";
+       if(product.addedBy)addedText=product.addedBy===currentUser?.id?"Añadido por ti":"Añadido por otro miembro";
+       const priceText=product.price>0?`${product.price.toFixed(2).replace(".",",")} € ud.`:"Añadir precio";
+       const selectedSupermarket=(product.supermarket||"").trim()||"Sin asignar";
+       const supermarketOptions=supermarkets.map(name=>`<option value="${escapeHtml(name)}" ${name===selectedSupermarket?"selected":""}>${escapeHtml(name)}</option>`).join("");
+
+       item.innerHTML=`<button class="check-button" onclick="toggleProduct(${index})">${product.completed?"✓":""}</button>
+       <div class="product-info">
+         <div class="product-name ${product.completed?"completed":""}">${escapeHtml(product.name)}</div>
+         <div class="product-meta">${escapeHtml(addedText)}</div>
+         <div class="controls">
+           <button class="qty-button" onclick="changeQuantity(${index},-1)">−</button>
+           <span class="quantity">×${product.quantity}</span>
+           <button class="qty-button" onclick="changeQuantity(${index},1)">+</button>
+           <button class="price-button" onclick="setPrice(${index})">${priceText}</button>
+           <select class="supermarket-select" onchange="setSupermarket(${index},this.value)">${supermarketOptions}</select>
+         </div>
+       </div>
+       <button class="favorite-button ${product.favorite?"active":""}" onclick="toggleFavorite(${index})" aria-label="Favorito">★</button>
+       <button class="delete-button" onclick="deleteProduct(${index})" aria-label="Borrar">🗑️</button>`;
+       categoryList.appendChild(item);
+     });
+     supermarketBox.appendChild(box);
+   });
+   list.appendChild(supermarketBox);
  });
 }
 function showSuggestions(){
@@ -246,6 +288,12 @@ async function toggleFavorite(index){
  const p=products[index];if(!p)return;const value=!p.favorite;
  const{error}=await supabaseClient.from("Productos").update({favorite:value}).eq("id",p.id).eq("list_id",LIST_ID);
  if(!error){p.favorite=value;renderList();renderQuickProducts();}else console.error(error);
+}
+async function setSupermarket(index,value){
+ const p=products[index];if(!p)return;
+ const supermarket=value==="Sin asignar"?"":value;
+ const{error}=await supabaseClient.from("Productos").update({supermarket}).eq("id",p.id).eq("list_id",LIST_ID);
+ if(!error){p.supermarket=supermarket;renderList();}else{console.error("Error cambiando supermercado:",error);alert("No se pudo cambiar el supermercado.");}
 }
 async function setPrice(index){
  const p=products[index];if(!p)return;const current=p.price>0?p.price.toString().replace(".",","):"";const value=prompt(`Precio por unidad de ${p.name}:`,current);if(value===null)return;
