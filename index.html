@@ -41,6 +41,10 @@
     .summary-card { flex:1; background:white; border-radius:14px; padding:12px 6px; text-align:center; box-shadow:0 3px 14px rgba(0,0,0,.05); }
     .summary-value { display:block; font-size:19px; font-weight:800; color:var(--green-dark); }
     .summary-label { font-size:11px; color:var(--muted); }
+    .finish-area { margin:0 0 18px; }
+    .finish-button { width:100%; border:0; border-radius:14px; padding:13px 16px; background:#166534; color:white; font-size:15px; font-weight:800; box-shadow:0 3px 14px rgba(0,0,0,.08); }
+    .finish-button:disabled { opacity:.55; cursor:default; }
+    .finish-help { margin-top:6px; text-align:center; color:var(--muted); font-size:11px; }
     .quick-section { display:none; margin-bottom:24px; }
     .quick-header { display:flex; justify-content:space-between; align-items:center; margin:0 4px 9px; }
     .quick-title { font-size:17px; font-weight:800; color:#374151; }
@@ -99,6 +103,10 @@
 <div class="summary-card"><span id="pendingCount" class="summary-value">0</span><span class="summary-label">Pendientes</span></div>
 <div class="summary-card"><span id="favoriteCount" class="summary-value">0</span><span class="summary-label">Favoritos</span></div>
 <div class="summary-card"><span id="estimatedTotal" class="summary-value">0,00 €</span><span class="summary-label">Estimado</span></div>
+</div>
+<div class="finish-area">
+  <button id="finishButton" class="finish-button" onclick="finishPurchase()">🧾 Finalizar compra</button>
+  <div class="finish-help">Guarda en el historial y retira los productos marcados ✓</div>
 </div>
 <section id="quickSection" class="quick-section"><div class="quick-header"><span class="quick-title">⭐ Habituales</span><span class="quick-subtitle">Toca para añadir</span></div><div id="quickProducts" class="quick-products"></div></section>
 <div id="shoppingList"><div class="list"><div class="loading">Cargando lista...</div></div></div>
@@ -306,6 +314,58 @@ async function setPrice(index){
  if(!error){p.price=normalized;renderList();}else console.error(error);
 }
 async function deleteProduct(index){const p=products[index];if(!p)return;const{error}=await supabaseClient.from("Productos").delete().eq("id",p.id).eq("list_id",LIST_ID);if(!error)await loadProducts();}
+
+
+async function finishPurchase(){
+ if(!currentUser)return;
+ const bought=products.filter(p=>p.completed);
+ if(!bought.length){
+   alert("Marca con ✓ los productos comprados antes de finalizar la compra.");
+   return;
+ }
+ const total=bought.reduce((sum,p)=>sum+((Number(p.price)||0)*p.quantity),0);
+ const totalText=total.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+ const ok=confirm(`Vas a finalizar ${bought.length} producto${bought.length===1?"":"s"} por un total registrado de ${totalText}.\n\nSe guardarán en el historial y se quitarán de la lista.\n\n¿Continuar?`);
+ if(!ok)return;
+
+ const button=document.getElementById("finishButton");
+ button.disabled=true;
+ button.textContent="Guardando compra...";
+
+ const historyRows=bought.map(p=>({
+   list_id:LIST_ID,
+   user_id:currentUser.id,
+   product_name:p.name,
+   quantity:p.quantity,
+   price:Number(p.price)||0,
+   supermarket:p.supermarket||"",
+   category:getCategory(p.name),
+   purchased_at:new Date().toISOString()
+ }));
+
+ const{error:historyError}=await supabaseClient.from("purchase_history").insert(historyRows);
+ if(historyError){
+   console.error("Error guardando historial:",historyError);
+   alert("No se pudo guardar el historial. No se ha borrado ningún producto.");
+   button.disabled=false;
+   button.textContent="🧾 Finalizar compra";
+   return;
+ }
+
+ const ids=bought.map(p=>p.id);
+ const{error:deleteError}=await supabaseClient.from("Productos").delete().in("id",ids).eq("list_id",LIST_ID);
+
+ if(deleteError){
+   console.error("Error retirando productos:",deleteError);
+   alert("La compra se guardó en el historial, pero no se pudieron retirar algunos productos de la lista.");
+ }else{
+   alert("Compra finalizada y guardada en el historial 🧾");
+ }
+
+ button.disabled=false;
+ button.textContent="🧾 Finalizar compra";
+ await loadProducts();
+}
 
 function splitVoiceProducts(text){
  let clean=(text||"").trim();
