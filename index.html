@@ -115,7 +115,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://hnytuqklpuhiqeapkykx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN";
+const SUPABASE_KEY = "b_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN";
 const LIST_ID = "59d10737-51e8-4edf-9217-63e25a5f4a6b";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let products = [], currentUser = null, learnedProducts = [];
@@ -346,7 +346,7 @@ async function finishPurchase(){
  const{error:historyError}=await supabaseClient.from("purchase_history").insert(historyRows);
  if(historyError){
    console.error("Error guardando historial:",historyError);
-   alert("No se pudo guardar el historial. No se ha borrado ningún producto.");
+   alert("ERROR SUPABASE:\n" + (historyError.message || JSON.stringify(historyError)));
    button.disabled=false;
    button.textContent="🧾 Finalizar compra";
    return;
