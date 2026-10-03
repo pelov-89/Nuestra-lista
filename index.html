@@ -31,6 +31,9 @@
     .add-area { position:relative; margin-bottom:16px; }
     .add-box { display:flex; gap:8px; padding:9px; background:white; border-radius:18px; box-shadow:0 8px 28px rgba(0,0,0,.10); }
     .add-box input { border:0; min-width:0; }
+    .voice-button { flex-shrink:0; width:48px; border:0; border-radius:12px; background:#eef7f0; font-size:22px; }
+    .voice-button.listening { background:#fee2e2; }
+    .voice-status { display:none; margin:7px 10px 0; color:var(--green-dark); font-size:12px; font-weight:700; }
     .suggestions { display:none; position:absolute; top:calc(100% + 5px); left:8px; right:8px; z-index:20; background:white; border-radius:14px; box-shadow:0 8px 25px rgba(0,0,0,.16); overflow-y:auto; max-height:240px; }
     .suggestion { padding:13px 15px; border-bottom:1px solid var(--border); font-size:15px; }
     .suggestion:last-child { border-bottom:0; }
@@ -89,8 +92,9 @@
 <div class="user-bar"><span id="userEmail" class="user-email"></span><button class="logout-button" onclick="logout()">Cerrar sesión</button></div>
 <div class="add-area"><div class="add-box">
 <input type="text" id="productInput" placeholder="¿Qué necesitamos?" autocomplete="off" oninput="showSuggestions()" onkeydown="handleProductKey(event)">
+<button id="voiceButton" class="voice-button" onclick="startVoiceInput()" aria-label="Añadir por voz">🎙️</button>
 <button class="add-button" onclick="addProduct()">Añadir</button>
-</div><div id="suggestions" class="suggestions"></div></div>
+</div><div id="voiceStatus" class="voice-status"></div><div id="suggestions" class="suggestions"></div></div>
 <div class="summary">
 <div class="summary-card"><span id="pendingCount" class="summary-value">0</span><span class="summary-label">Pendientes</span></div>
 <div class="summary-card"><span id="favoriteCount" class="summary-value">0</span><span class="summary-label">Favoritos</span></div>
@@ -302,6 +306,84 @@ async function setPrice(index){
  if(!error){p.price=normalized;renderList();}else console.error(error);
 }
 async function deleteProduct(index){const p=products[index];if(!p)return;const{error}=await supabaseClient.from("Productos").delete().eq("id",p.id).eq("list_id",LIST_ID);if(!error)await loadProducts();}
+
+function splitVoiceProducts(text){
+ let clean=(text||"").trim();
+ // Convierte "y" en separador y admite comas.
+ clean=clean.replace(/\s+y\s+/gi,",");
+ return clean.split(",").map(x=>x.trim()).filter(Boolean);
+}
+function parseVoiceItem(text){
+ let item=text.trim();
+ let quantity=1;
+ const numberWords={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};
+ const match=item.match(/^(?:(\d+)|([a-záéíóúñ]+))\s+(.+)$/i);
+ if(match){
+   const q=match[1]?Number(match[1]):numberWords[(match[2]||"").toLowerCase()];
+   if(q){quantity=q;item=match[3].trim();}
+ }
+ return {name:item,quantity};
+}
+async function addVoiceProduct(name,quantity){
+ if(!name||quantity<1)return;
+ const existing=products.find(p=>normalizeName(p.name)===normalizeName(name)&&!p.completed);
+ if(existing){
+   const newQuantity=existing.quantity+quantity;
+   const{error}=await supabaseClient.from("Productos").update({Cantidad:newQuantity}).eq("id",existing.id).eq("list_id",LIST_ID);
+   if(!error)await learnProduct(name);
+   return;
+ }
+ const ok=await insertProduct(name);
+ if(!ok)return;
+ if(quantity>1){
+   // Localizamos el recién creado para fijar la cantidad pedida.
+   const{data}=await supabaseClient.from("Productos").select("id").eq("list_id",LIST_ID).ilike("Nombre",name).eq("Comprado",false).order("id",{ascending:false}).limit(1);
+   if(data&&data[0])await supabaseClient.from("Productos").update({Cantidad:quantity}).eq("id",data[0].id);
+ }
+}
+async function processVoiceText(text){
+ const parts=splitVoiceProducts(text);
+ if(!parts.length)return;
+ const status=document.getElementById("voiceStatus");
+ status.style.display="block";
+ status.textContent=`Añadiendo ${parts.length} producto${parts.length===1?"":"s"}...`;
+ for(const part of parts){
+   const parsed=parseVoiceItem(part);
+   await addVoiceProduct(parsed.name,parsed.quantity);
+ }
+ await loadProducts();
+ status.textContent="✓ Añadido por voz";
+ setTimeout(()=>{status.style.display="none";},1800);
+}
+function startVoiceInput(){
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SpeechRecognition){
+   alert("El reconocimiento de voz no está disponible en este navegador. Prueba con Chrome en Android.");
+   return;
+ }
+ const recognition=new SpeechRecognition();
+ recognition.lang="es-ES";
+ recognition.interimResults=false;
+ recognition.maxAlternatives=1;
+ const button=document.getElementById("voiceButton");
+ const status=document.getElementById("voiceStatus");
+ button.classList.add("listening");
+ status.style.display="block";
+ status.textContent="🎙️ Escuchando... Di varios productos separados por “y”.";
+ recognition.onresult=event=>{
+   const text=event.results[0][0].transcript;
+   status.textContent=`He oído: ${text}`;
+   processVoiceText(text);
+ };
+ recognition.onerror=event=>{
+   console.error("Error de voz:",event.error);
+   status.textContent="No te he entendido. Prueba otra vez.";
+   setTimeout(()=>{status.style.display="none";},1800);
+ };
+ recognition.onend=()=>button.classList.remove("listening");
+ recognition.start();
+}
+
 function handleLoginKey(event){if(event.key==="Enter")login();}
 function handleProductKey(event){if(event.key==="Enter"){document.getElementById("suggestions").style.display="none";addProduct();}}
 async function startApp(){
