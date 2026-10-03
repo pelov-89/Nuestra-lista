@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#16a34a">
   <title>Nuestra Lista</title>
   <link rel="manifest" href="/manifest.json">
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     :root {
       --green: #16a34a;
@@ -21,6 +20,7 @@
       --muted: #6b7280;
       --border: #e5e7eb;
       --danger: #dc2626;
+      --yellow: #f59e0b;
     }
 
     body {
@@ -34,53 +34,48 @@
     header {
       background: linear-gradient(135deg, #15803d, #22c55e);
       color: white;
-      padding: 38px 20px 54px;
+      padding: 34px 20px 52px;
       text-align: center;
     }
 
     h1 {
       margin: 0;
-      font-size: 32px;
+      font-size: 31px;
       font-weight: 800;
-      letter-spacing: -0.8px;
     }
 
     .subtitle {
-      margin-top: 8px;
-      color: rgba(255,255,255,0.88);
+      margin-top: 7px;
+      color: rgba(255,255,255,.9);
       font-size: 15px;
     }
 
     main {
       max-width: 650px;
       margin: -24px auto 40px;
-      padding: 0 16px;
+      padding: 0 14px;
     }
 
     .card {
       background: white;
       border-radius: 18px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+      box-shadow: 0 8px 28px rgba(0,0,0,.10);
     }
-
-    /* LOGIN */
 
     #loginView {
       max-width: 430px;
-      margin: 0 auto;
+      margin: auto;
       padding: 24px;
     }
 
     .login-title {
       margin: 0 0 6px;
-      font-size: 23px;
       text-align: center;
     }
 
     .login-text {
-      margin: 0 0 22px;
-      color: var(--muted);
       text-align: center;
+      color: var(--muted);
       font-size: 14px;
     }
 
@@ -88,17 +83,17 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      margin-top: 20px;
     }
 
     input {
       width: 100%;
-      padding: 15px 14px;
+      padding: 14px;
       border: 1px solid var(--border);
       border-radius: 12px;
       background: #f3f4f6;
       font-size: 16px;
       outline: none;
-      color: var(--text);
     }
 
     input:focus {
@@ -107,165 +102,176 @@
       box-shadow: 0 0 0 2px var(--green-soft);
     }
 
-    .primary-button {
-      border: none;
+    button { cursor: pointer; }
+
+    .primary-button, .add-button {
+      border: 0;
       border-radius: 12px;
-      padding: 15px 18px;
       background: var(--green);
       color: white;
-      font-size: 16px;
       font-weight: 700;
-      cursor: pointer;
-    }
-
-    .primary-button:active {
-      transform: scale(0.98);
-      background: var(--green-dark);
+      font-size: 16px;
+      padding: 14px 17px;
     }
 
     .login-error {
-      min-height: 18px;
-      margin-top: 12px;
       color: var(--danger);
       text-align: center;
+      min-height: 18px;
+      margin-top: 12px;
       font-size: 14px;
     }
 
-    /* APP */
-
-    #appView {
-      display: none;
-    }
+    #appView { display: none; }
 
     .user-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 12px;
-      padding: 11px 14px;
       background: white;
       border-radius: 14px;
-      box-shadow: 0 3px 14px rgba(0,0,0,0.06);
+      padding: 11px 14px;
+      margin-bottom: 12px;
+      box-shadow: 0 3px 14px rgba(0,0,0,.06);
     }
 
     .user-email {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
       color: var(--muted);
       font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .logout-button {
-      flex-shrink: 0;
-      border: none;
+      border: 0;
       background: transparent;
       color: var(--green-dark);
       font-weight: 700;
-      cursor: pointer;
+    }
+
+    .add-area {
+      position: relative;
+      margin-bottom: 16px;
     }
 
     .add-box {
       display: flex;
-      gap: 9px;
-      padding: 10px;
-      margin-bottom: 26px;
+      gap: 8px;
+      padding: 9px;
       background: white;
       border-radius: 18px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+      box-shadow: 0 8px 28px rgba(0,0,0,.10);
     }
 
     .add-box input {
-      flex: 1;
+      border: 0;
       min-width: 0;
-      border: none;
     }
 
-    .add-button {
-      flex-shrink: 0;
-      border: none;
-      border-radius: 12px;
-      padding: 14px 18px;
-      background: var(--green);
-      color: white;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
+    .suggestions {
+      display: none;
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 8px;
+      right: 8px;
+      z-index: 20;
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,.16);
+      overflow: hidden;
+      max-height: 240px;
+      overflow-y: auto;
     }
 
-    .category {
+    .suggestion {
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--border);
+      font-size: 15px;
+    }
+
+    .suggestion:last-child { border-bottom: 0; }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
       margin-bottom: 22px;
     }
 
+    .summary-card {
+      flex: 1;
+      background: white;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      box-shadow: 0 3px 14px rgba(0,0,0,.05);
+    }
+
+    .summary-value {
+      display: block;
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--green-dark);
+    }
+
+    .summary-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .category { margin-bottom: 22px; }
+
     .category-title {
+      margin: 0 0 9px 5px;
       font-size: 17px;
       font-weight: 800;
-      margin: 0 0 9px 5px;
       color: #374151;
     }
 
     .list {
-      background: var(--card);
+      background: white;
       border-radius: 18px;
       padding: 5px 12px;
-      box-shadow: 0 3px 16px rgba(0,0,0,0.06);
-      overflow: hidden;
-    }
-
-    .empty,
-    .loading {
-      text-align: center;
-      color: var(--muted);
-      padding: 42px 10px;
-      font-size: 16px;
+      box-shadow: 0 3px 16px rgba(0,0,0,.06);
     }
 
     .item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      min-height: 62px;
-      padding: 10px 3px;
+      gap: 9px;
+      min-height: 67px;
+      padding: 9px 2px;
       border-bottom: 1px solid var(--border);
     }
 
-    .item:last-child {
-      border-bottom: none;
-    }
-
-    .item span {
-      flex: 1;
-      font-size: 17px;
-      font-weight: 500;
-    }
+    .item:last-child { border-bottom: 0; }
 
     .check-button {
       flex-shrink: 0;
-      border: 2px solid #d1d5db;
-      border-radius: 50%;
       width: 34px;
       height: 34px;
+      border: 2px solid #d1d5db;
+      border-radius: 50%;
       background: white;
       color: white;
-      cursor: pointer;
-      font-size: 19px;
+      font-size: 18px;
       font-weight: bold;
     }
 
-    .item:has(.completed) .check-button {
-      border-color: var(--green);
+    .item.checked .check-button {
       background: var(--green);
+      border-color: var(--green);
     }
 
-    .delete-button {
-      border: none;
-      background: transparent;
-      color: #9ca3af;
-      cursor: pointer;
-      font-size: 18px;
-      padding: 8px;
+    .product-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .product-name {
+      font-size: 16px;
+      font-weight: 600;
+      word-break: break-word;
     }
 
     .completed {
@@ -273,433 +279,553 @@
       color: #9ca3af;
     }
 
+    .product-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 7px;
+    }
+
+    .qty-button {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border: 0;
+      border-radius: 8px;
+      background: var(--green-soft);
+      color: var(--green-dark);
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .quantity {
+      min-width: 31px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .price-button {
+      border: 0;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #f3f4f6;
+      color: #4b5563;
+      font-size: 12px;
+    }
+
+    .favorite-button, .delete-button {
+      flex-shrink: 0;
+      border: 0;
+      background: transparent;
+      padding: 7px 4px;
+      font-size: 19px;
+    }
+
+    .favorite-button { color: #d1d5db; }
+    .favorite-button.active { color: var(--yellow); }
+
+    .delete-button { color: #9ca3af; }
+
+    .empty, .loading {
+      padding: 40px 10px;
+      text-align: center;
+      color: var(--muted);
+    }
+
     @media (max-width: 480px) {
-      header {
-        padding-top: 30px;
-        padding-bottom: 48px;
-      }
-
-      h1 {
-        font-size: 29px;
-      }
-
-      main {
-        padding: 0 12px;
-      }
-
-      #loginView {
-        padding: 22px 18px;
-      }
-
-      .add-box {
-        gap: 7px;
-        padding: 8px;
-      }
-
-      .add-button {
-        padding: 13px 15px;
-      }
+      header { padding-top: 29px; }
+      h1 { font-size: 29px; }
+      main { padding: 0 11px; }
     }
   </style>
 </head>
 
 <body>
 
-  <header>
-    <h1>🛒 Nuestra Lista</h1>
-    <div class="subtitle">La compra, juntos y sin olvidos.</div>
-  </header>
+<header>
+  <h1>🛒 Nuestra Lista</h1>
+  <div class="subtitle">La compra, juntos y sin olvidos.</div>
+</header>
 
-  <main>
+<main>
 
-    <!-- INICIO DE SESIÓN -->
-    <section id="loginView" class="card">
-      <h2 class="login-title">Bienvenido 👋</h2>
-      <p class="login-text">
-        Inicia sesión para acceder a vuestra lista compartida.
-      </p>
+  <section id="loginView" class="card">
+    <h2 class="login-title">Bienvenido 👋</h2>
+    <p class="login-text">Inicia sesión para acceder a vuestra lista compartida.</p>
 
-      <div class="login-form">
-        <input
-          type="email"
-          id="emailInput"
-          placeholder="Correo electrónico"
-          autocomplete="email"
-        >
+    <div class="login-form">
+      <input type="email" id="emailInput"
+        placeholder="Correo electrónico" autocomplete="email">
 
-        <input
-          type="password"
-          id="passwordInput"
-          placeholder="Contraseña"
-          autocomplete="current-password"
-          onkeydown="handleLoginKey(event)"
-        >
+      <input type="password" id="passwordInput"
+        placeholder="Contraseña" autocomplete="current-password"
+        onkeydown="handleLoginKey(event)">
 
-        <button
-          id="loginButton"
-          class="primary-button"
-          onclick="login()"
-        >
-          Iniciar sesión
-        </button>
-      </div>
+      <button id="loginButton" class="primary-button" onclick="login()">
+        Iniciar sesión
+      </button>
+    </div>
 
-      <div id="loginError" class="login-error"></div>
-    </section>
+    <div id="loginError" class="login-error"></div>
+  </section>
 
-    <!-- LISTA -->
-    <section id="appView">
+  <section id="appView">
 
-      <div class="user-bar">
-        <span id="userEmail" class="user-email"></span>
-        <button class="logout-button" onclick="logout()">
-          Cerrar sesión
-        </button>
-      </div>
+    <div class="user-bar">
+      <span id="userEmail" class="user-email"></span>
+      <button class="logout-button" onclick="logout()">Cerrar sesión</button>
+    </div>
 
+    <div class="add-area">
       <div class="add-box">
-        <input
-          type="text"
-          id="productInput"
+        <input type="text" id="productInput"
           placeholder="¿Qué necesitamos?"
-          onkeydown="handleProductKey(event)"
-        >
+          autocomplete="off"
+          oninput="showSuggestions()"
+          onkeydown="handleProductKey(event)">
 
-        <button class="add-button" onclick="addProduct()">
-          Añadir
+        <button class="add-button" onclick="addProduct()">Añadir</button>
+      </div>
+
+      <div id="suggestions" class="suggestions"></div>
+    </div>
+
+    <div class="summary">
+      <div class="summary-card">
+        <span id="pendingCount" class="summary-value">0</span>
+        <span class="summary-label">Pendientes</span>
+      </div>
+
+      <div class="summary-card">
+        <span id="favoriteCount" class="summary-value">0</span>
+        <span class="summary-label">Favoritos</span>
+      </div>
+
+      <div class="summary-card">
+        <span id="estimatedTotal" class="summary-value">0,00 €</span>
+        <span class="summary-label">Estimado</span>
+      </div>
+    </div>
+
+    <div id="shoppingList">
+      <div class="list">
+        <div class="loading">Cargando lista...</div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL =
+  "https://hnytuqklpuhiqeapkykx.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN";
+
+const LIST_ID =
+  "59d10737-51e8-4edf-9217-63e25a5f4a6b";
+
+const supabaseClient =
+  supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let products = [];
+let currentUser = null;
+let learnedProducts = [];
+
+const basicProducts = [
+  "Leche", "Pan", "Huevos", "Agua", "Tomate", "Patatas",
+  "Cebolla", "Lechuga", "Manzanas", "Plátanos", "Naranjas",
+  "Pollo", "Carne", "Salmón", "Atún", "Yogur", "Queso",
+  "Mantequilla", "Arroz", "Pasta", "Café", "Azúcar",
+  "Aceite", "Sal", "Coca-Cola", "Zumo", "Papel higiénico",
+  "Detergente", "Suavizante", "Lavavajillas"
+];
+
+function getCategory(product) {
+  const text = product.toLowerCase();
+
+  if (["leche","yogur","yogurt","queso","mantequilla","nata"]
+    .some(x => text.includes(x))) return "🥛 Lácteos";
+
+  if (["pollo","carne","ternera","cerdo","hamburguesa","salchicha"]
+    .some(x => text.includes(x))) return "🥩 Carnicería";
+
+  if (["pescado","atún","atun","salmón","salmon","gamba","marisco"]
+    .some(x => text.includes(x))) return "🐟 Pescadería";
+
+  if (["manzana","plátano","platano","naranja","pera","tomate",
+       "lechuga","patata","cebolla","zanahoria"]
+    .some(x => text.includes(x))) return "🍎 Fruta y verdura";
+
+  if (["pan","barra","croissant","magdalena"]
+    .some(x => text.includes(x))) return "🥖 Panadería";
+
+  if (["agua","coca","refresco","zumo","cerveza"]
+    .some(x => text.includes(x))) return "🥤 Bebidas";
+
+  if (["detergente","lejía","lejia","lavavajillas","suavizante",
+       "limpiador","papel higiénico","papel higienico"]
+    .some(x => text.includes(x))) return "🧽 Limpieza y hogar";
+
+  if (["arroz","pasta","aceite","sal","azúcar","azucar","café","cafe"]
+    .some(x => text.includes(x))) return "🥫 Despensa";
+
+  return "🛍️ Otros";
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text || "";
+  return div.innerHTML;
+}
+
+function showLogin() {
+  document.getElementById("loginView").style.display = "block";
+  document.getElementById("appView").style.display = "none";
+}
+
+function showApp(user) {
+  currentUser = user;
+  document.getElementById("loginView").style.display = "none";
+  document.getElementById("appView").style.display = "block";
+  document.getElementById("userEmail").textContent = user.email || "";
+}
+
+async function login() {
+  const emailInput = document.getElementById("emailInput");
+  const passwordInput = document.getElementById("passwordInput");
+  const loginButton = document.getElementById("loginButton");
+  const errorBox = document.getElementById("loginError");
+
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
+
+  errorBox.textContent = "";
+
+  if (!email || !password) {
+    errorBox.textContent = "Introduce tu correo y contraseña.";
+    return;
+  }
+
+  loginButton.disabled = true;
+  loginButton.textContent = "Entrando...";
+
+  const { data, error } =
+    await supabaseClient.auth.signInWithPassword({ email, password });
+
+  loginButton.disabled = false;
+  loginButton.textContent = "Iniciar sesión";
+
+  if (error) {
+    console.error(error);
+    errorBox.textContent =
+      "No se ha podido iniciar sesión. Revisa el correo y la contraseña.";
+    return;
+  }
+
+  passwordInput.value = "";
+  showApp(data.user);
+
+  await Promise.all([
+    loadProducts(),
+    loadLearnedProducts()
+  ]);
+}
+
+async function logout() {
+  await supabaseClient.auth.signOut();
+  products = [];
+  learnedProducts = [];
+  currentUser = null;
+  showLogin();
+}
+
+async function loadProducts() {
+  const list = document.getElementById("shoppingList");
+
+  const { data, error } = await supabaseClient
+    .from("Productos")
+    .select("id, Nombre, Cantidad, Categoria, Comprado, list_id, added_by, price, favorite, supermarket")
+    .eq("list_id", LIST_ID);
+
+  if (error) {
+    console.error("Error cargando productos:", error);
+    list.innerHTML =
+      '<div class="list"><div class="empty">No se ha podido cargar la lista.</div></div>';
+    return;
+  }
+
+  products = (data || []).map(p => ({
+    id: p.id,
+    name: p.Nombre,
+    quantity: p.Cantidad || 1,
+    completed: !!p.Comprado,
+    addedBy: p.added_by,
+    price: Number(p.price) || 0,
+    favorite: !!p.favorite,
+    supermarket: p.supermarket || ""
+  }));
+
+  renderList();
+}
+
+async function loadLearnedProducts() {
+  const { data, error } = await supabaseClient
+    .from("product_history")
+    .select("product_name, times_added")
+    .eq("list_id", LIST_ID)
+    .order("times_added", { ascending: false })
+    .limit(30);
+
+  if (!error) {
+    learnedProducts = data || [];
+  }
+}
+
+function updateSummary() {
+  const pending = products.filter(p => !p.completed).length;
+  const favorites = products.filter(p => p.favorite).length;
+
+  const total = products.reduce((sum, p) =>
+    sum + ((Number(p.price) || 0) * p.quantity), 0);
+
+  document.getElementById("pendingCount").textContent = pending;
+  document.getElementById("favoriteCount").textContent = favorites;
+  document.getElementById("estimatedTotal").textContent =
+    total.toLocaleString("es-ES", {
+      style: "currency",
+      currency: "EUR"
+    });
+}
+
+function renderList() {
+  const list = document.getElementById("shoppingList");
+  list.innerHTML = "";
+
+  updateSummary();
+
+  if (!products.length) {
+    list.innerHTML =
+      '<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';
+    return;
+  }
+
+  const categories = {};
+
+  products.forEach((product, index) => {
+    const category = getCategory(product.name);
+    if (!categories[category]) categories[category] = [];
+    categories[category].push({ product, index });
+  });
+
+  Object.keys(categories).forEach(category => {
+    const box = document.createElement("div");
+    box.className = "category";
+
+    box.innerHTML = `
+      <div class="category-title">${category}</div>
+      <div class="list"></div>
+    `;
+
+    const categoryList = box.querySelector(".list");
+
+    categories[category].forEach(({ product, index }) => {
+      const item = document.createElement("div");
+      item.className = "item" + (product.completed ? " checked" : "");
+
+      let addedText = "";
+      if (product.addedBy) {
+        addedText =
+          product.addedBy === currentUser?.id
+            ? "Añadido por ti"
+            : "Añadido por otro miembro";
+      }
+
+      const priceText =
+        product.price > 0
+          ? `${product.price.toFixed(2).replace(".", ",")} € ud.`
+          : "Añadir precio";
+
+      item.innerHTML = `
+        <button class="check-button"
+          onclick="toggleProduct(${index})">
+          ${product.completed ? "✓" : ""}
         </button>
-      </div>
 
-      <div id="shoppingList">
-        <div class="list">
-          <div class="loading">Cargando lista...</div>
+        <div class="product-info">
+          <div class="product-name ${product.completed ? "completed" : ""}">
+            ${escapeHtml(product.name)}
+          </div>
+
+          <div class="product-meta">${addedText}</div>
+
+          <div class="controls">
+            <button class="qty-button"
+              onclick="changeQuantity(${index}, -1)">−</button>
+
+            <span class="quantity">×${product.quantity}</span>
+
+            <button class="qty-button"
+              onclick="changeQuantity(${index}, 1)">+</button>
+
+            <button class="price-button"
+              onclick="setPrice(${index})">
+              ${priceText}
+            </button>
+          </div>
         </div>
-      </div>
 
-    </section>
+        <button class="favorite-button ${product.favorite ? "active" : ""}"
+          onclick="toggleFavorite(${index})"
+          aria-label="Favorito">★</button>
 
-  </main>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    const SUPABASE_URL =
-      "https://hnytuqklpuhiqeapkykx.supabase.co";
-
-    const SUPABASE_KEY =
-      "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN";
-
-    const LIST_ID =
-      "59d10737-51e8-4edf-9217-63e25a5f4a6b";
-
-    const supabaseClient =
-      supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let products = [];
-
-    function getCategory(product) {
-      const text = product.toLowerCase();
-
-      if (
-        text.includes("leche") ||
-        text.includes("yogur") ||
-        text.includes("yogurt") ||
-        text.includes("queso") ||
-        text.includes("mantequilla") ||
-        text.includes("nata")
-      ) {
-        return "🥛 Lácteos";
-      }
-
-      if (
-        text.includes("pollo") ||
-        text.includes("carne") ||
-        text.includes("ternera") ||
-        text.includes("cerdo") ||
-        text.includes("hamburguesa") ||
-        text.includes("salchicha")
-      ) {
-        return "🥩 Carnicería";
-      }
-
-      if (
-        text.includes("pescado") ||
-        text.includes("atún") ||
-        text.includes("atun") ||
-        text.includes("salmón") ||
-        text.includes("salmon") ||
-        text.includes("gamba") ||
-        text.includes("marisco")
-      ) {
-        return "🐟 Pescadería";
-      }
-
-      if (
-        text.includes("manzana") ||
-        text.includes("plátano") ||
-        text.includes("platano") ||
-        text.includes("naranja") ||
-        text.includes("pera") ||
-        text.includes("tomate") ||
-        text.includes("lechuga") ||
-        text.includes("patata") ||
-        text.includes("cebolla") ||
-        text.includes("zanahoria")
-      ) {
-        return "🍎 Fruta y verdura";
-      }
-
-      if (
-        text.includes("pan") ||
-        text.includes("barra") ||
-        text.includes("croissant") ||
-        text.includes("magdalena")
-      ) {
-        return "🥖 Panadería";
-      }
-
-      if (
-        text.includes("agua") ||
-        text.includes("coca") ||
-        text.includes("refresco") ||
-        text.includes("zumo") ||
-        text.includes("cerveza")
-      ) {
-        return "🥤 Bebidas";
-      }
-
-      if (
-        text.includes("detergente") ||
-        text.includes("lejía") ||
-        text.includes("lejia") ||
-        text.includes("lavavajillas") ||
-        text.includes("suavizante") ||
-        text.includes("limpiador") ||
-        text.includes("papel higiénico") ||
-        text.includes("papel higienico")
-      ) {
-        return "🧽 Limpieza y hogar";
-      }
-
-      return "🛍️ Otros";
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function showLogin() {
-      document.getElementById("loginView").style.display = "block";
-      document.getElementById("appView").style.display = "none";
-    }
-
-    function showApp(user) {
-      document.getElementById("loginView").style.display = "none";
-      document.getElementById("appView").style.display = "block";
-      document.getElementById("userEmail").textContent = user.email || "";
-    }
-
-    async function login() {
-      const emailInput = document.getElementById("emailInput");
-      const passwordInput = document.getElementById("passwordInput");
-      const loginButton = document.getElementById("loginButton");
-      const errorBox = document.getElementById("loginError");
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-
-      errorBox.textContent = "";
-
-      if (!email || !password) {
-        errorBox.textContent = "Introduce tu correo y contraseña.";
-        return;
-      }
-
-      loginButton.disabled = true;
-      loginButton.textContent = "Entrando...";
-
-      const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-          email,
-          password
-        });
-
-      loginButton.disabled = false;
-      loginButton.textContent = "Iniciar sesión";
-
-      if (error) {
-        console.error("Error de inicio de sesión:", error);
-        errorBox.textContent =
-          "No se ha podido iniciar sesión. Revisa el correo y la contraseña.";
-        return;
-      }
-
-      passwordInput.value = "";
-
-      showApp(data.user);
-      await loadProducts();
-    }
-
-    async function logout() {
-      await supabaseClient.auth.signOut();
-      products = [];
-      showLogin();
-    }
-
-    async function loadProducts() {
-      const list = document.getElementById("shoppingList");
-
-      list.innerHTML = `
-        <div class="list">
-          <div class="loading">Cargando lista...</div>
-        </div>
+        <button class="delete-button"
+          onclick="deleteProduct(${index})"
+          aria-label="Borrar">🗑️</button>
       `;
 
-      const { data, error } = await supabaseClient
-        .from("Productos")
-        .select("id, Nombre, Cantidad, Categoria, Comprado, list_id")
-        .eq("list_id", LIST_ID);
+      categoryList.appendChild(item);
+    });
 
-      if (error) {
-        console.error("Error al cargar productos:", error);
+    list.appendChild(box);
+  });
+}
 
-        list.innerHTML = `
-          <div class="list">
-            <div class="empty">
-              No se ha podido cargar la lista.
-            </div>
-          </div>
-        `;
-        return;
-      }
+function showSuggestions() {
+  const input = document.getElementById("productInput");
+  const box = document.getElementById("suggestions");
+  const search = input.value.trim().toLowerCase();
 
-      products = (data || []).map(product => ({
-        id: product.id,
-        name: product.Nombre,
-        quantity: product.Cantidad || 1,
-        completed: product.Comprado
-      }));
+  if (!search) {
+    box.style.display = "none";
+    return;
+  }
 
-      renderList();
-    }
+  const learned = learnedProducts.map(x => x.product_name);
+  const currentNames = products.map(x => x.name);
 
-    function renderList() {
-      const list = document.getElementById("shoppingList");
+  const all = [...new Set([
+    ...learned,
+    ...currentNames,
+    ...basicProducts
+  ])];
 
-      list.innerHTML = "";
+  const matches = all
+    .filter(name =>
+      name &&
+      name.toLowerCase().includes(search) &&
+      name.toLowerCase() !== search
+    )
+    .slice(0, 6);
 
-      if (products.length === 0) {
-        list.innerHTML = `
-          <div class="list">
-            <div class="empty">
-              Tu lista está vacía 🛒
-            </div>
-          </div>
-        `;
-        return;
-      }
+  if (!matches.length) {
+    box.style.display = "none";
+    return;
+  }
 
-      const categories = {};
+  box.innerHTML = "";
 
-      products.forEach((product, index) => {
-        const category = getCategory(product.name);
+  matches.forEach(name => {
+    const row = document.createElement("div");
+    row.className = "suggestion";
+    row.textContent = name;
 
-        if (!categories[category]) {
-          categories[category] = [];
-        }
-
-        categories[category].push({
-          product,
-          index
-        });
-      });
-
-      Object.keys(categories).forEach(category => {
-        const categoryBox = document.createElement("div");
-        categoryBox.className = "category";
-
-        categoryBox.innerHTML = `
-          <div class="category-title">
-            ${category}
-          </div>
-          <div class="list"></div>
-        `;
-
-        const categoryList =
-          categoryBox.querySelector(".list");
-
-        categories[category].forEach(({ product, index }) => {
-          const item = document.createElement("div");
-          item.className = "item";
-
-          item.innerHTML = `
-            <button
-              class="check-button"
-              onclick="toggleProduct(${index})"
-              aria-label="Marcar producto"
-            >
-              ${product.completed ? "✓" : ""}
-            </button>
-
-<span class="${product.completed ? "completed" : ""}">
-  ${escapeHtml(product.name)}
-  <button onclick="changeQuantity(${index}, -1)">−</button>
-  <span>×${product.quantity}</span>
-  <button onclick="changeQuantity(${index}, 1)">+</button>
-</span>
-
-            <button
-              class="delete-button"
-              onclick="deleteProduct(${index})"
-              aria-label="Borrar producto"
-            >
-              🗑️
-            </button>
-          `;
-
-          categoryList.appendChild(item);
-        });
-
-        list.appendChild(categoryBox);
-      });
-    }
-
-    async function addProduct() {
-      const input = document.getElementById("productInput");
-      const name = input.value.trim();
-
-      if (!name) {
-        return;
-      }
-
-      const { error } = await supabaseClient
-        .from("Productos")
-        .insert({
-          Nombre: name,
-          Cantidad: 1,
-          Categoria: getCategory(name),
-          Comprado: false,
-          list_id: LIST_ID
-        });
-
-      if (error) {
-        console.error("Error al añadir producto:", error);
-        alert("No se pudo añadir el producto.");
-        return;
-      }
-
-      input.value = "";
+    row.onclick = () => {
+      input.value = name;
+      box.style.display = "none";
       input.focus();
+    };
 
-      await loadProducts();
-    }
+    box.appendChild(row);
+  });
+
+  box.style.display = "block";
+}
+
+async function learnProduct(name) {
+  if (!currentUser) return;
+
+  const normalized = name.trim();
+
+  const { data } = await supabaseClient
+    .from("product_history")
+    .select("id, times_added")
+    .eq("list_id", LIST_ID)
+    .eq("user_id", currentUser.id)
+    .ilike("product_name", normalized)
+    .maybeSingle();
+
+  if (data) {
+    await supabaseClient
+      .from("product_history")
+      .update({
+        times_added: (data.times_added || 1) + 1,
+        last_added_at: new Date().toISOString()
+      })
+      .eq("id", data.id);
+  } else {
+    await supabaseClient
+      .from("product_history")
+      .insert({
+        user_id: currentUser.id,
+        list_id: LIST_ID,
+        product_name: normalized,
+        category: getCategory(normalized),
+        times_added: 1
+      });
+  }
+
+  await loadLearnedProducts();
+}
+
+async function addProduct() {
+  const input = document.getElementById("productInput");
+  const name = input.value.trim();
+
+  if (!name || !currentUser) return;
+
+  const { error } = await supabaseClient
+    .from("Productos")
+    .insert({
+      Nombre: name,
+      Cantidad: 1,
+      Categoria: getCategory(name),
+      Comprado: false,
+      list_id: LIST_ID,
+      added_by: currentUser.id,
+      favorite: false
+    });
+
+  if (error) {
+    console.error(error);
+    alert("No se pudo añadir el producto.");
+    return;
+  }
+
+  input.value = "";
+  document.getElementById("suggestions").style.display = "none";
+  input.focus();
+
+  await learnProduct(name);
+  await loadProducts();
+}
+
 async function changeQuantity(index, change) {
   const product = products[index];
   if (!product) return;
 
-  const newQuantity = Math.max(1, product.quantity + change);
+  const newQuantity =
+    Math.max(1, product.quantity + change);
 
   const { error } = await supabaseClient
     .from("Productos")
@@ -707,85 +833,110 @@ async function changeQuantity(index, change) {
     .eq("id", product.id)
     .eq("list_id", LIST_ID);
 
-  if (error) {
-    console.error("Error al cambiar cantidad:", error);
+  if (!error) await loadProducts();
+}
+
+async function toggleProduct(index) {
+  const product = products[index];
+  if (!product) return;
+
+  const { error } = await supabaseClient
+    .from("Productos")
+    .update({ Comprado: !product.completed })
+    .eq("id", product.id)
+    .eq("list_id", LIST_ID);
+
+  if (!error) await loadProducts();
+}
+
+async function toggleFavorite(index) {
+  const product = products[index];
+  if (!product) return;
+
+  const { error } = await supabaseClient
+    .from("Productos")
+    .update({ favorite: !product.favorite })
+    .eq("id", product.id)
+    .eq("list_id", LIST_ID);
+
+  if (!error) await loadProducts();
+}
+
+async function setPrice(index) {
+  const product = products[index];
+  if (!product) return;
+
+  const current =
+    product.price > 0
+      ? product.price.toString().replace(".", ",")
+      : "";
+
+  const value = prompt(
+    `Precio por unidad de ${product.name}:`,
+    current
+  );
+
+  if (value === null) return;
+
+  const normalized =
+    Number(value.replace(",", "."));
+
+  if (Number.isNaN(normalized) || normalized < 0) {
+    alert("Introduce un precio válido.");
     return;
   }
 
-  await loadProducts();
+  const { error } = await supabaseClient
+    .from("Productos")
+    .update({ price: normalized })
+    .eq("id", product.id)
+    .eq("list_id", LIST_ID);
+
+  if (!error) await loadProducts();
 }
-    async function toggleProduct(index) {
-      const product = products[index];
 
-      if (!product) {
-        return;
-      }
+async function deleteProduct(index) {
+  const product = products[index];
+  if (!product) return;
 
-      const { error } = await supabaseClient
-        .from("Productos")
-        .update({
-          Comprado: !product.completed
-        })
-        .eq("id", product.id)
-        .eq("list_id", LIST_ID);
+  const { error } = await supabaseClient
+    .from("Productos")
+    .delete()
+    .eq("id", product.id)
+    .eq("list_id", LIST_ID);
 
-      if (error) {
-        console.error("Error al actualizar producto:", error);
-        alert("No se pudo actualizar el producto.");
-        return;
-      }
+  if (!error) await loadProducts();
+}
 
-      await loadProducts();
-    }
+function handleLoginKey(event) {
+  if (event.key === "Enter") login();
+}
 
-    async function deleteProduct(index) {
-      const product = products[index];
+function handleProductKey(event) {
+  if (event.key === "Enter") {
+    document.getElementById("suggestions").style.display = "none";
+    addProduct();
+  }
+}
 
-      if (!product) {
-        return;
-      }
+async function startApp() {
+  const {
+    data: { session }
+  } = await supabaseClient.auth.getSession();
 
-      const { error } = await supabaseClient
-        .from("Productos")
-        .delete()
-        .eq("id", product.id)
-        .eq("list_id", LIST_ID);
+  if (session?.user) {
+    showApp(session.user);
 
-      if (error) {
-        console.error("Error al borrar producto:", error);
-        alert("No se pudo borrar el producto.");
-        return;
-      }
+    await Promise.all([
+      loadProducts(),
+      loadLearnedProducts()
+    ]);
+  } else {
+    showLogin();
+  }
+}
 
-      await loadProducts();
-    }
-
-    function handleLoginKey(event) {
-      if (event.key === "Enter") {
-        login();
-      }
-    }
-
-    function handleProductKey(event) {
-      if (event.key === "Enter") {
-        addProduct();
-      }
-    }
-
-    async function startApp() {
-      const {
-        data: { session }
-      } = await supabaseClient.auth.getSession();
-
-      if (session && session.user) {
-        showApp(session.user);
-        await loadProducts();
-      } else {
-        showLogin();
-      }
-    }
-
-   supabaseClient
+supabaseClient
   .channel("productos-realtime")
   .on(
     "postgres_changes",
@@ -795,21 +946,27 @@ async function changeQuantity(index, change) {
       table: "Productos",
       filter: `list_id=eq.${LIST_ID}`
     },
-    () => {
-      loadProducts();
-    }
+    () => loadProducts()
   )
   .subscribe();
-    
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT") {
-        products = [];
-        showLogin();
-      }
-    });
-    
-    startApp();
-  </script>
+
+supabaseClient.auth.onAuthStateChange((event) => {
+  if (event === "SIGNED_OUT") {
+    products = [];
+    currentUser = null;
+    showLogin();
+  }
+});
+
+document.addEventListener("click", event => {
+  const area = document.querySelector(".add-area");
+  if (area && !area.contains(event.target)) {
+    document.getElementById("suggestions").style.display = "none";
+  }
+});
+
+startApp();
+</script>
 
 </body>
 </html>
