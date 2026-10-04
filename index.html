@@ -51,7 +51,8 @@
     .quick-subtitle { font-size:11px; color:var(--muted); }
     .quick-products { display:flex; gap:8px; overflow-x:auto; padding:2px 2px 8px; scrollbar-width:none; }
     .quick-products::-webkit-scrollbar { display:none; }
-    .quick-product { flex:0 0 auto; max-width:180px; border:1px solid #bbf7d0; background:white; border-radius:14px; padding:10px 12px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+    .quick-product { position:relative; flex:0 0 auto; max-width:180px; border:1px solid #bbf7d0; background:white; border-radius:14px; padding:10px 34px 10px 12px; box-shadow:0 2px 10px rgba(0,0,0,.05); }
+    .quick-remove { position:absolute; top:5px; right:6px; width:25px; height:25px; border:0; border-radius:50%; background:#f3f4f6; color:#6b7280; font-size:15px; font-weight:800; line-height:25px; padding:0; }
     .quick-name { display:block; max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:700; color:#374151; }
     .quick-meta { display:block; margin-top:4px; color:var(--green-dark); font-size:11px; font-weight:700; }
     .category { margin-bottom:22px; }
@@ -182,7 +183,7 @@ async function loadProducts(){
 }
 
 async function loadLearnedProducts(){
- const{data,error}=await supabaseClient.from("product_history").select("product_name, times_added, last_price, last_supermarket").eq("list_id",LIST_ID).order("times_added",{ascending:false}).limit(100);
+ const{data,error}=await supabaseClient.from("product_history").select("product_name, times_added, last_price, last_supermarket, hidden_from_quick").eq("list_id",LIST_ID).order("times_added",{ascending:false}).limit(100);
  if(error){console.error("Error cargando habituales:",error);learnedProducts=[];renderQuickProducts();return;}
  learnedProducts=data||[];renderQuickProducts();
 }
@@ -194,7 +195,7 @@ function updateSummary(){
 }
 function getQuickProducts(){
  const m=new Map();
- learnedProducts.forEach(item=>{const name=(item.product_name||"").trim();if(!name)return;const key=normalizeName(name),times=Number(item.times_added)||0,current=m.get(key);if(!current)m.set(key,{name,times,favorite:false});else current.times+=times;});
+ learnedProducts.forEach(item=>{if(item.hidden_from_quick)return;const name=(item.product_name||"").trim();if(!name)return;const key=normalizeName(name),times=Number(item.times_added)||0,current=m.get(key);if(!current)m.set(key,{name,times,favorite:false});else current.times+=times;});
  products.forEach(p=>{if(!p.favorite)return;const key=normalizeName(p.name);if(!m.has(key))m.set(key,{name:p.name,times:0,favorite:true});else m.get(key).favorite=true;});
  return[...m.values()].sort((a,b)=>{if(a.favorite!==b.favorite)return Number(b.favorite)-Number(a.favorite);if(b.times!==a.times)return b.times-a.times;return a.name.localeCompare(b.name,"es");}).slice(0,10);
 }
@@ -202,8 +203,25 @@ function renderQuickProducts(){
  const section=document.getElementById("quickSection"),container=document.getElementById("quickProducts");if(!section||!container)return;
  const quick=getQuickProducts();if(!quick.length){section.style.display="none";container.innerHTML="";return;}
  section.style.display="block";container.innerHTML="";
- quick.forEach(item=>{const button=document.createElement("button");button.className="quick-product";const meta=item.favorite?"★ Favorito · + Añadir":item.times>1?`${item.times} veces · + Añadir`:"+ Añadir";button.innerHTML=`<span class="quick-name">${escapeHtml(item.name)}</span><span class="quick-meta">${escapeHtml(meta)}</span>`;button.onclick=()=>addQuickProduct(item.name);container.appendChild(button);});
+ quick.forEach(item=>{
+   const card=document.createElement("div");card.className="quick-product";
+   const meta=item.favorite?"★ Favorito · + Añadir":item.times>1?`${item.times} veces · + Añadir`:"+ Añadir";
+   card.innerHTML=`<button class="quick-remove" aria-label="Quitar de habituales">×</button><span class="quick-name">${escapeHtml(item.name)}</span><span class="quick-meta">${escapeHtml(meta)}</span>`;
+   card.onclick=()=>addQuickProduct(item.name);
+   card.querySelector(".quick-remove").onclick=event=>{event.stopPropagation();hideQuickProduct(item.name);};
+   container.appendChild(card);
+ });
 }
+async function hideQuickProduct(name){
+ if(!currentUser||!name)return;
+ const ok=confirm(`¿Quitar "${name}" de Habituales?\n\nNo se borrará su precio, supermercado ni historial.`);
+ if(!ok)return;
+ const{error}=await supabaseClient.from("product_history").update({hidden_from_quick:true}).eq("list_id",LIST_ID).eq("user_id",currentUser.id).ilike("product_name",name);
+ if(error){console.error("Error ocultando habitual:",error);alert("No se pudo quitar de Habituales.");return;}
+ learnedProducts=learnedProducts.map(item=>normalizeName(item.product_name)===normalizeName(name)?{...item,hidden_from_quick:true}:item);
+ renderQuickProducts();
+}
+
 function renderList(){
  const list=document.getElementById("shoppingList");list.innerHTML="";updateSummary();
  if(!products.length){list.innerHTML='<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';return;}
