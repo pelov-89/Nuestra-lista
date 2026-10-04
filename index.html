@@ -74,7 +74,6 @@
     .favorite-button.active { color:var(--yellow); }
     .delete-button { color:#9ca3af; }
     .empty,.loading { padding:40px 10px; text-align:center; color:var(--muted); }
-
     .supermarket-section { margin-bottom:24px; }
     .supermarket-title { margin:0 0 9px 5px; font-size:18px; font-weight:800; color:var(--green-dark); }
     .supermarket-select { border:0; border-radius:8px; padding:6px 7px; background:#eef7f0; color:#374151; font-size:12px; max-width:145px; }
@@ -104,10 +103,7 @@
 <div class="summary-card"><span id="favoriteCount" class="summary-value">0</span><span class="summary-label">Favoritos</span></div>
 <div class="summary-card"><span id="estimatedTotal" class="summary-value">0,00 €</span><span class="summary-label">Estimado</span></div>
 </div>
-<div class="finish-area">
-  <button id="finishButton" class="finish-button" onclick="finishPurchase()">🧾 Finalizar compra</button>
-  <div class="finish-help">Guarda en el historial y retira los productos marcados ✓</div>
-</div>
+<div class="finish-area"><button id="finishButton" class="finish-button" onclick="finishPurchase()">🧾 Finalizar compra</button><div class="finish-help">Guarda en el historial y retira los productos marcados ✓</div></div>
 <section id="quickSection" class="quick-section"><div class="quick-header"><span class="quick-title">⭐ Habituales</span><span class="quick-subtitle">Toca para añadir</span></div><div id="quickProducts" class="quick-products"></div></section>
 <div id="shoppingList"><div class="list"><div class="loading">Cargando lista...</div></div></div>
 </section>
@@ -122,6 +118,19 @@ let products = [], currentUser = null, learnedProducts = [];
 
 const basicProducts = ["Leche","Pan","Huevos","Agua","Tomate","Patatas","Cebolla","Lechuga","Fresas","Manzanas","Plátanos","Naranjas","Peras","Limón","Aguacate","Pimiento","Pepino","Calabacín","Pollo","Carne","Salmón","Atún","Yogur","Queso","Mantequilla","Arroz","Pasta","Café","Azúcar","Aceite","Sal","Coca-Cola","Zumo","Papel higiénico","Detergente","Suavizante","Lavavajillas"];
 
+const presetProducts = [
+ {name:"Hielo",supermarket:"Mercadona"},{name:"Papas fritas congeladas",supermarket:"Mercadona"},{name:"Vino",supermarket:"Mercadona"},
+ {name:"Cerveza suave",supermarket:"Mercadona"},{name:"Té jengibre",supermarket:"Mercadona"},{name:"Té manzanilla",supermarket:"Mercadona"},
+ {name:"Té dormir",supermarket:"Mercadona"},{name:"Té eucalipto",supermarket:"Mercadona"},{name:"Pan de hamburguesa de espelta",supermarket:"Mercadona"},
+ {name:"Pan de hamburguesa",supermarket:"Mercadona"},{name:"Jamón de cebo",supermarket:"Mercadona"},{name:"Jamón barato",supermarket:"Mercadona"},
+ {name:"Salmón fileteado",supermarket:"Mercadona"},{name:"Pistachos",supermarket:"Mercadona"},{name:"Pipas aguasal",supermarket:"Mercadona"},
+ {name:"Pipas saladas",supermarket:"Mercadona"},{name:"Papel higiénico",supermarket:"Mercadona"},{name:"Bastoncillos oreja",supermarket:"Mercadona"},
+ {name:"Seda dental",supermarket:"Mercadona"},{name:"Desodorante Nivea Men",supermarket:"Mercadona"},{name:"Desodorante Nivea Woman",supermarket:"Mercadona"},
+ {name:"Yogurt Blue",supermarket:"Mercadona"},
+ {name:"Refrescos",supermarket:"Cash Silva"},{name:"Coca-Cola lata",supermarket:"Cash Silva"},{name:"Fanta lata",supermarket:"Cash Silva"},
+ {name:"Nestea maracuyá",supermarket:"Cash Silva"},{name:"Nestea limón",supermarket:"Cash Silva"},{name:"Papel cocina",supermarket:"Cash Silva"}
+];
+
 const categoryOrder = ["🍎 Fruta y verdura","🥛 Lácteos","🥩 Carnicería","🐟 Pescadería","🥖 Panadería","🥫 Despensa","🥤 Bebidas","🧽 Limpieza y hogar","🛍️ Otros"];
 const supermarkets = ["Sin asignar","Supercarmela","Cash Silva","DIA","Mercadona","Covirán","Lidl","Carrefour","Aldi"];
 
@@ -132,13 +141,22 @@ function getCategory(product) {
  if(["pescado","atún","atun","salmón","salmon","gamba","marisco","merluza","bacalao","calamar","sepia","langostino"].some(x=>text.includes(x))) return "🐟 Pescadería";
  if(["fresa","manzana","plátano","platano","naranja","pera","tomate","lechuga","patata","cebolla","zanahoria","limón","limon","mandarina","melón","melon","sandía","sandia","uva","kiwi","aguacate","pimiento","pepino","calabacín","calabacin","berenjena","ajo","brócoli","brocoli","espinaca","champiñón","champinon"].some(x=>text.includes(x))) return "🍎 Fruta y verdura";
  if(["pan","barra","croissant","magdalena","mollete","tostada"].some(x=>text.includes(x))) return "🥖 Panadería";
- if(["agua","coca","refresco","zumo","cerveza","batido"].some(x=>text.includes(x))) return "🥤 Bebidas";
- if(["detergente","lejía","lejia","lavavajillas","suavizante","limpiador","papel higiénico","papel higienico","servilleta","bolsa basura","estropajo","esponja"].some(x=>text.includes(x))) return "🧽 Limpieza y hogar";
- if(["arroz","pasta","aceite","sal","azúcar","azucar","café","cafe","harina","lenteja","garbanzo","judía","judia","galleta","cereal","conserva"].some(x=>text.includes(x))) return "🥫 Despensa";
+ if(["agua","coca","refresco","zumo","cerveza","batido","fanta","nestea","vino"].some(x=>text.includes(x))) return "🥤 Bebidas";
+ if(["detergente","lejía","lejia","lavavajillas","suavizante","limpiador","papel higiénico","papel higienico","papel cocina","servilleta","bolsa basura","estropajo","esponja"].some(x=>text.includes(x))) return "🧽 Limpieza y hogar";
+ if(["arroz","pasta","aceite","sal","azúcar","azucar","café","cafe","harina","lenteja","garbanzo","judía","judia","galleta","cereal","conserva","pistacho","pipas","té ","te "].some(x=>text.includes(x))) return "🥫 Despensa";
  return "🛍️ Otros";
 }
 function escapeHtml(text){const d=document.createElement("div");d.textContent=text||"";return d.innerHTML;}
 function normalizeName(text){return(text||"").trim().toLowerCase();}
+function getLearned(name){return learnedProducts.find(x=>normalizeName(x.product_name)===normalizeName(name));}
+function getPreset(name){return presetProducts.find(x=>normalizeName(x.name)===normalizeName(name));}
+function rememberedData(name){
+ const learned=getLearned(name),preset=getPreset(name);
+ return {
+   price: learned&&Number(learned.last_price)>0 ? Number(learned.last_price) : 0,
+   supermarket: (learned&&learned.last_supermarket)|| (preset&&preset.supermarket) || ""
+ };
+}
 function showLogin(){document.getElementById("loginView").style.display="block";document.getElementById("appView").style.display="none";}
 function showApp(user){currentUser=user;document.getElementById("loginView").style.display="none";document.getElementById("appView").style.display="block";document.getElementById("userEmail").textContent=user.email||"";}
 
@@ -159,19 +177,12 @@ async function loadProducts(){
  const{data,error}=await supabaseClient.from("Productos").select("id, Nombre, Cantidad, Categoria, Comprado, list_id, added_by, price, favorite, supermarket").eq("list_id",LIST_ID);
  if(error){console.error("Error cargando productos:",error);list.innerHTML='<div class="list"><div class="empty">No se ha podido cargar la lista.</div></div>';return;}
  products=(data||[]).map((p,position)=>({id:p.id,name:p.Nombre,quantity:p.Cantidad||1,completed:!!p.Comprado,addedBy:p.added_by,price:Number(p.price)||0,favorite:!!p.favorite,supermarket:p.supermarket||"",position}));
- // Orden determinista: categoría, nombre e id. Así las recargas no hacen "bailar" las filas.
- products.sort((a,b)=>{
-   const ca=categoryOrder.indexOf(getCategory(a.name)), cb=categoryOrder.indexOf(getCategory(b.name));
-   if(ca!==cb)return ca-cb;
-   const byName=(a.name||"").localeCompare(b.name||"","es",{sensitivity:"base"});
-   if(byName!==0)return byName;
-   return String(a.id).localeCompare(String(b.id));
- });
+ products.sort((a,b)=>{const ca=categoryOrder.indexOf(getCategory(a.name)),cb=categoryOrder.indexOf(getCategory(b.name));if(ca!==cb)return ca-cb;const byName=(a.name||"").localeCompare(b.name||"","es",{sensitivity:"base"});if(byName!==0)return byName;return String(a.id).localeCompare(String(b.id));});
  renderList();renderQuickProducts();
 }
 
 async function loadLearnedProducts(){
- const{data,error}=await supabaseClient.from("product_history").select("product_name, times_added").eq("list_id",LIST_ID).order("times_added",{ascending:false}).limit(40);
+ const{data,error}=await supabaseClient.from("product_history").select("product_name, times_added, last_price, last_supermarket").eq("list_id",LIST_ID).order("times_added",{ascending:false}).limit(100);
  if(error){console.error("Error cargando habituales:",error);learnedProducts=[];renderQuickProducts();return;}
  learnedProducts=data||[];renderQuickProducts();
 }
@@ -191,265 +202,131 @@ function renderQuickProducts(){
  const section=document.getElementById("quickSection"),container=document.getElementById("quickProducts");if(!section||!container)return;
  const quick=getQuickProducts();if(!quick.length){section.style.display="none";container.innerHTML="";return;}
  section.style.display="block";container.innerHTML="";
- quick.forEach(item=>{const button=document.createElement("button");button.className="quick-product";const meta=item.favorite?"★ Favorito · + Añadir":item.times>1?`${item.times} veces · + Añadir`:"+ Añadir";
- button.innerHTML=`<span class="quick-name">${escapeHtml(item.name)}</span><span class="quick-meta">${escapeHtml(meta)}</span>`;button.onclick=()=>addQuickProduct(item.name);container.appendChild(button);});
+ quick.forEach(item=>{const button=document.createElement("button");button.className="quick-product";const meta=item.favorite?"★ Favorito · + Añadir":item.times>1?`${item.times} veces · + Añadir`:"+ Añadir";button.innerHTML=`<span class="quick-name">${escapeHtml(item.name)}</span><span class="quick-meta">${escapeHtml(meta)}</span>`;button.onclick=()=>addQuickProduct(item.name);container.appendChild(button);});
 }
 function renderList(){
  const list=document.getElementById("shoppingList");list.innerHTML="";updateSummary();
  if(!products.length){list.innerHTML='<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';return;}
-
- // Primero agrupamos por supermercado y, dentro de cada uno, por categoría.
  const groups={};
- products.forEach((product,index)=>{
-   const supermarket=(product.supermarket||"").trim()||"Sin asignar";
-   const category=getCategory(product.name);
-   if(!groups[supermarket])groups[supermarket]={};
-   if(!groups[supermarket][category])groups[supermarket][category]=[];
-   groups[supermarket][category].push({product,index});
- });
-
+ products.forEach((product,index)=>{const supermarket=(product.supermarket||"").trim()||"Sin asignar";const category=getCategory(product.name);if(!groups[supermarket])groups[supermarket]={};if(!groups[supermarket][category])groups[supermarket][category]=[];groups[supermarket][category].push({product,index});});
  const supermarketOrder=[...supermarkets,...Object.keys(groups).filter(x=>!supermarkets.includes(x))];
-
  supermarketOrder.filter(s=>groups[s]).forEach(supermarket=>{
-   const supermarketBox=document.createElement("section");
-   supermarketBox.className="supermarket-section";
-   supermarketBox.innerHTML=`<div class="supermarket-title">🏪 ${escapeHtml(supermarket)}</div>`;
+   const supermarketBox=document.createElement("section");supermarketBox.className="supermarket-section";supermarketBox.innerHTML=`<div class="supermarket-title">🏪 ${escapeHtml(supermarket)}</div>`;
    const categoryGroups=groups[supermarket];
-
    categoryOrder.filter(c=>categoryGroups[c]).forEach(category=>{
-     const box=document.createElement("div");box.className="category";
-     box.innerHTML=`<div class="category-title">${category}</div><div class="list"></div>`;
-     const categoryList=box.querySelector(".list");
-
+     const box=document.createElement("div");box.className="category";box.innerHTML=`<div class="category-title">${category}</div><div class="list"></div>`;const categoryList=box.querySelector(".list");
      categoryGroups[category].forEach(({product,index})=>{
        const item=document.createElement("div");item.className="item"+(product.completed?" checked":"");
-       let addedText="";
-       if(product.addedBy)addedText=product.addedBy===currentUser?.id?"Añadido por ti":"Añadido por otro miembro";
+       let addedText="";if(product.addedBy)addedText=product.addedBy===currentUser?.id?"Añadido por ti":"Añadido por otro miembro";
        const priceText=product.price>0?`${product.price.toFixed(2).replace(".",",")} € ud.`:"Añadir precio";
        const selectedSupermarket=(product.supermarket||"").trim()||"Sin asignar";
        const supermarketOptions=supermarkets.map(name=>`<option value="${escapeHtml(name)}" ${name===selectedSupermarket?"selected":""}>${escapeHtml(name)}</option>`).join("");
-
-       item.innerHTML=`<button class="check-button" onclick="toggleProduct(${index})">${product.completed?"✓":""}</button>
-       <div class="product-info">
-         <div class="product-name ${product.completed?"completed":""}">${escapeHtml(product.name)}</div>
-         <div class="product-meta">${escapeHtml(addedText)}</div>
-         <div class="controls">
-           <button class="qty-button" onclick="changeQuantity(${index},-1)">−</button>
-           <span class="quantity">×${product.quantity}</span>
-           <button class="qty-button" onclick="changeQuantity(${index},1)">+</button>
-           <button class="price-button" onclick="setPrice(${index})">${priceText}</button>
-           <select class="supermarket-select" onchange="setSupermarket(${index},this.value)">${supermarketOptions}</select>
-         </div>
-       </div>
-       <button class="favorite-button ${product.favorite?"active":""}" onclick="toggleFavorite(${index})" aria-label="Favorito">★</button>
-       <button class="delete-button" onclick="deleteProduct(${index})" aria-label="Borrar">🗑️</button>`;
+       item.innerHTML=`<button class="check-button" onclick="toggleProduct(${index})">${product.completed?"✓":""}</button><div class="product-info"><div class="product-name ${product.completed?"completed":""}">${escapeHtml(product.name)}</div><div class="product-meta">${escapeHtml(addedText)}</div><div class="controls"><button class="qty-button" onclick="changeQuantity(${index},-1)">−</button><span class="quantity">×${product.quantity}</span><button class="qty-button" onclick="changeQuantity(${index},1)">+</button><button class="price-button" onclick="setPrice(${index})">${priceText}</button><select class="supermarket-select" onchange="setSupermarket(${index},this.value)">${supermarketOptions}</select></div></div><button class="favorite-button ${product.favorite?"active":""}" onclick="toggleFavorite(${index})" aria-label="Favorito">★</button><button class="delete-button" onclick="deleteProduct(${index})" aria-label="Borrar">🗑️</button>`;
        categoryList.appendChild(item);
-     });
-     supermarketBox.appendChild(box);
-   });
-   list.appendChild(supermarketBox);
+     });supermarketBox.appendChild(box);
+   });list.appendChild(supermarketBox);
  });
 }
 function showSuggestions(){
- const input=document.getElementById("productInput"),box=document.getElementById("suggestions"),search=input.value.trim().toLowerCase();
- if(!search){box.style.display="none";return;}
- const all=[...new Set([...learnedProducts.map(x=>x.product_name),...products.map(x=>x.name),...basicProducts])];
- const matches=all.filter(name=>name&&name.toLowerCase().includes(search)&&name.toLowerCase()!==search).slice(0,6);
+ const input=document.getElementById("productInput"),box=document.getElementById("suggestions"),search=input.value.trim().toLowerCase();if(!search){box.style.display="none";return;}
+ const all=[...new Set([...learnedProducts.map(x=>x.product_name),...presetProducts.map(x=>x.name),...products.map(x=>x.name),...basicProducts])];
+ const matches=all.filter(name=>name&&name.toLowerCase().includes(search)&&name.toLowerCase()!==search).slice(0,8);
  if(!matches.length){box.style.display="none";return;}box.innerHTML="";
  matches.forEach(name=>{const row=document.createElement("div");row.className="suggestion";row.textContent=name;row.onclick=()=>{input.value=name;box.style.display="none";input.focus();};box.appendChild(row);});box.style.display="block";
 }
-async function learnProduct(name){
- if(!currentUser)return;const normalized=name.trim();
- const{data,error}=await supabaseClient.from("product_history").select("id, times_added").eq("list_id",LIST_ID).eq("user_id",currentUser.id).ilike("product_name",normalized).maybeSingle();
+async function learnProduct(name,changes={}){
+ if(!currentUser)return;
+ const normalized=name.trim();
+ const{data,error}=await supabaseClient.from("product_history").select("id, times_added, last_price, last_supermarket").eq("list_id",LIST_ID).eq("user_id",currentUser.id).ilike("product_name",normalized).maybeSingle();
  if(error){console.error("Error buscando habitual:",error);return;}
- if(data)await supabaseClient.from("product_history").update({times_added:(data.times_added||1)+1,last_added_at:new Date().toISOString()}).eq("id",data.id);
- else await supabaseClient.from("product_history").insert({user_id:currentUser.id,list_id:LIST_ID,product_name:normalized,category:getCategory(normalized),times_added:1});
+ if(data){
+   const update={...changes};
+   if(changes.incrementTimes){update.times_added=(data.times_added||1)+1;update.last_added_at=new Date().toISOString();}
+   delete update.incrementTimes;
+   if(Object.keys(update).length)await supabaseClient.from("product_history").update(update).eq("id",data.id);
+ }else{
+   const preset=getPreset(normalized);
+   const row={user_id:currentUser.id,list_id:LIST_ID,product_name:normalized,category:getCategory(normalized),times_added:changes.incrementTimes?1:0,last_supermarket:changes.last_supermarket??preset?.supermarket??null,last_price:changes.last_price??null};
+   await supabaseClient.from("product_history").insert(row);
+ }
  await loadLearnedProducts();
 }
 async function insertProduct(name){
  if(!name||!currentUser)return false;
- const{error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:1,Categoria:getCategory(name),Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false});
- if(error){console.error("Error añadiendo producto:",error);alert("No se pudo añadir el producto.");return false;}await learnProduct(name);return true;
+ const remembered=rememberedData(name);
+ const{error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:1,Categoria:getCategory(name),Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false,price:remembered.price||null,supermarket:remembered.supermarket||""});
+ if(error){console.error("Error añadiendo producto:",error);alert("No se pudo añadir el producto.");return false;}
+ await learnProduct(name,{incrementTimes:true});
+ return true;
 }
-// NUEVO: si el producto ya está pendiente, no duplica fila; suma una unidad.
 async function addOrIncreaseProduct(name){
  const existing=products.find(p=>normalizeName(p.name)===normalizeName(name)&&!p.completed);
- if(existing){
-   const{error}=await supabaseClient.from("Productos").update({Cantidad:existing.quantity+1}).eq("id",existing.id).eq("list_id",LIST_ID);
-   if(error){console.error("Error aumentando producto:",error);alert("No se pudo actualizar el producto.");return false;}
-   await learnProduct(name);return true;
- }
+ if(existing){const{error}=await supabaseClient.from("Productos").update({Cantidad:existing.quantity+1}).eq("id",existing.id).eq("list_id",LIST_ID);if(error){console.error("Error aumentando producto:",error);alert("No se pudo actualizar el producto.");return false;}await learnProduct(name,{incrementTimes:true});return true;}
  return await insertProduct(name);
 }
-async function addProduct(){
- const input=document.getElementById("productInput"),name=input.value.trim();if(!name)return;
- const ok=await addOrIncreaseProduct(name);if(!ok)return;input.value="";document.getElementById("suggestions").style.display="none";input.focus();await loadProducts();
-}
+async function addProduct(){const input=document.getElementById("productInput"),name=input.value.trim();if(!name)return;const ok=await addOrIncreaseProduct(name);if(!ok)return;input.value="";document.getElementById("suggestions").style.display="none";input.focus();await loadProducts();}
 async function addQuickProduct(name){if(!name)return;const ok=await addOrIncreaseProduct(name);if(ok)await loadProducts();}
-async function changeQuantity(index,change){
- const p=products[index];if(!p)return;const q=Math.max(1,p.quantity+change);
- const{error}=await supabaseClient.from("Productos").update({Cantidad:q}).eq("id",p.id).eq("list_id",LIST_ID);
- if(!error){p.quantity=q;renderList();}else console.error("Error cambiando cantidad:",error);
-}
-async function toggleProduct(index){
- const p=products[index];if(!p)return;const value=!p.completed;
- const{error}=await supabaseClient.from("Productos").update({Comprado:value}).eq("id",p.id).eq("list_id",LIST_ID);
- if(!error){p.completed=value;renderList();}else console.error(error);
-}
-async function toggleFavorite(index){
- const p=products[index];if(!p)return;const value=!p.favorite;
- const{error}=await supabaseClient.from("Productos").update({favorite:value}).eq("id",p.id).eq("list_id",LIST_ID);
- if(!error){p.favorite=value;renderList();renderQuickProducts();}else console.error(error);
-}
+async function changeQuantity(index,change){const p=products[index];if(!p)return;const q=Math.max(1,p.quantity+change);const{error}=await supabaseClient.from("Productos").update({Cantidad:q}).eq("id",p.id).eq("list_id",LIST_ID);if(!error){p.quantity=q;renderList();}else console.error("Error cambiando cantidad:",error);}
+async function toggleProduct(index){const p=products[index];if(!p)return;const value=!p.completed;const{error}=await supabaseClient.from("Productos").update({Comprado:value}).eq("id",p.id).eq("list_id",LIST_ID);if(!error){p.completed=value;renderList();}else console.error(error);}
+async function toggleFavorite(index){const p=products[index];if(!p)return;const value=!p.favorite;const{error}=await supabaseClient.from("Productos").update({favorite:value}).eq("id",p.id).eq("list_id",LIST_ID);if(!error){p.favorite=value;renderList();renderQuickProducts();}else console.error(error);}
 async function setSupermarket(index,value){
- const p=products[index];if(!p)return;
- const supermarket=value==="Sin asignar"?"":value;
+ const p=products[index];if(!p)return;const supermarket=value==="Sin asignar"?"":value;
  const{error}=await supabaseClient.from("Productos").update({supermarket}).eq("id",p.id).eq("list_id",LIST_ID);
- if(!error){p.supermarket=supermarket;renderList();}else{console.error("Error cambiando supermercado:",error);alert("No se pudo cambiar el supermercado.");}
+ if(!error){p.supermarket=supermarket;await learnProduct(p.name,{last_supermarket:supermarket||null});renderList();}else{console.error("Error cambiando supermercado:",error);alert("No se pudo cambiar el supermercado.");}
 }
 async function setPrice(index){
  const p=products[index];if(!p)return;const current=p.price>0?p.price.toString().replace(".",","):"";const value=prompt(`Precio por unidad de ${p.name}:`,current);if(value===null)return;
  const normalized=Number(value.replace(",","."));if(Number.isNaN(normalized)||normalized<0){alert("Introduce un precio válido.");return;}
  const{error}=await supabaseClient.from("Productos").update({price:normalized}).eq("id",p.id).eq("list_id",LIST_ID);
- if(!error){p.price=normalized;renderList();}else console.error(error);
+ if(!error){p.price=normalized;await learnProduct(p.name,{last_price:normalized});renderList();}else console.error(error);
 }
 async function deleteProduct(index){const p=products[index];if(!p)return;const{error}=await supabaseClient.from("Productos").delete().eq("id",p.id).eq("list_id",LIST_ID);if(!error)await loadProducts();}
-
 
 async function finishPurchase(){
  if(!currentUser)return;
  const bought=products.filter(p=>p.completed);
- if(!bought.length){
-   alert("Marca con ✓ los productos comprados antes de finalizar la compra.");
-   return;
- }
+ if(!bought.length){alert("Marca con ✓ los productos comprados antes de finalizar la compra.");return;}
  const total=bought.reduce((sum,p)=>sum+((Number(p.price)||0)*p.quantity),0);
  const totalText=total.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
- const ok=confirm(`Vas a finalizar ${bought.length} producto${bought.length===1?"":"s"} por un total registrado de ${totalText}.\n\nSe guardarán en el historial y se quitarán de la lista.\n\n¿Continuar?`);
- if(!ok)return;
-
- const button=document.getElementById("finishButton");
- button.disabled=true;
- button.textContent="Guardando compra...";
-
- const historyRows=bought.map(p=>({
-   list_id:LIST_ID,
-   user_id:currentUser.id,
-   product_name:p.name,
-   quantity:p.quantity,
-   price:Number(p.price)||0,
-   supermarket:p.supermarket||"",
-   category:getCategory(p.name),
-   purchased_at:new Date().toISOString()
- }));
-
+ const ok=confirm(`Vas a finalizar ${bought.length} producto${bought.length===1?"":"s"} por un total registrado de ${totalText}.\n\nSe guardarán en el historial y se quitarán de la lista.\n\n¿Continuar?`);if(!ok)return;
+ const button=document.getElementById("finishButton");button.disabled=true;button.textContent="Guardando compra...";
+ const historyRows=bought.map(p=>({list_id:LIST_ID,user_id:currentUser.id,product_name:p.name,quantity:p.quantity,price:Number(p.price)||0,supermarket:p.supermarket||"",category:getCategory(p.name),purchased_at:new Date().toISOString()}));
  const{error:historyError}=await supabaseClient.from("purchase_history").insert(historyRows);
- if(historyError){
-   console.error("Error guardando historial:",historyError);
-   alert("ERROR SUPABASE:\n" + (historyError.message || JSON.stringify(historyError)));
-   button.disabled=false;
-   button.textContent="🧾 Finalizar compra";
-   return;
+ if(historyError){console.error("Error guardando historial:",historyError);alert("ERROR SUPABASE:\n"+(historyError.message||JSON.stringify(historyError)));button.disabled=false;button.textContent="🧾 Finalizar compra";return;}
+ // Al finalizar, reforzamos la memoria con el último precio y supermercado realmente comprados.
+ for(const p of bought){
+   await learnProduct(p.name,{last_price:Number(p.price)||0,last_supermarket:p.supermarket||null});
  }
-
  const ids=bought.map(p=>p.id);
  const{error:deleteError}=await supabaseClient.from("Productos").delete().in("id",ids).eq("list_id",LIST_ID);
-
- if(deleteError){
-   console.error("Error retirando productos:",deleteError);
-   alert("La compra se guardó en el historial, pero no se pudieron retirar algunos productos de la lista.");
- }else{
-   alert("Compra finalizada y guardada en el historial 🧾");
- }
-
- button.disabled=false;
- button.textContent="🧾 Finalizar compra";
- await loadProducts();
+ if(deleteError){console.error("Error retirando productos:",deleteError);alert("La compra se guardó en el historial, pero no se pudieron retirar algunos productos de la lista.");}
+ else alert("Compra finalizada y guardada en el historial 🧾");
+ button.disabled=false;button.textContent="🧾 Finalizar compra";await loadProducts();
 }
 
-function splitVoiceProducts(text){
- let clean=(text||"").trim();
- // Convierte "y" en separador y admite comas.
- clean=clean.replace(/\s+y\s+/gi,",");
- return clean.split(",").map(x=>x.trim()).filter(Boolean);
-}
-function parseVoiceItem(text){
- let item=text.trim();
- let quantity=1;
- const numberWords={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};
- const match=item.match(/^(?:(\d+)|([a-záéíóúñ]+))\s+(.+)$/i);
- if(match){
-   const q=match[1]?Number(match[1]):numberWords[(match[2]||"").toLowerCase()];
-   if(q){quantity=q;item=match[3].trim();}
- }
- return {name:item,quantity};
-}
+function splitVoiceProducts(text){let clean=(text||"").trim();clean=clean.replace(/\s+y\s+/gi,",");return clean.split(",").map(x=>x.trim()).filter(Boolean);}
+function parseVoiceItem(text){let item=text.trim();let quantity=1;const numberWords={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};const match=item.match(/^(?:(\d+)|([a-záéíóúñ]+))\s+(.+)$/i);if(match){const q=match[1]?Number(match[1]):numberWords[(match[2]||"").toLowerCase()];if(q){quantity=q;item=match[3].trim();}}return{name:item,quantity};}
 async function addVoiceProduct(name,quantity){
  if(!name||quantity<1)return;
  const existing=products.find(p=>normalizeName(p.name)===normalizeName(name)&&!p.completed);
- if(existing){
-   const newQuantity=existing.quantity+quantity;
-   const{error}=await supabaseClient.from("Productos").update({Cantidad:newQuantity}).eq("id",existing.id).eq("list_id",LIST_ID);
-   if(!error)await learnProduct(name);
-   return;
- }
- const ok=await insertProduct(name);
- if(!ok)return;
- if(quantity>1){
-   // Localizamos el recién creado para fijar la cantidad pedida.
-   const{data}=await supabaseClient.from("Productos").select("id").eq("list_id",LIST_ID).ilike("Nombre",name).eq("Comprado",false).order("id",{ascending:false}).limit(1);
-   if(data&&data[0])await supabaseClient.from("Productos").update({Cantidad:quantity}).eq("id",data[0].id);
- }
+ if(existing){const newQuantity=existing.quantity+quantity;const{error}=await supabaseClient.from("Productos").update({Cantidad:newQuantity}).eq("id",existing.id).eq("list_id",LIST_ID);if(!error)await learnProduct(name,{incrementTimes:true});return;}
+ const remembered=rememberedData(name);
+ const{data,error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:quantity,Categoria:getCategory(name),Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false,price:remembered.price||null,supermarket:remembered.supermarket||""}).select("id").single();
+ if(error){console.error("Error añadiendo por voz:",error);return;}
+ if(data)await learnProduct(name,{incrementTimes:true});
 }
-async function processVoiceText(text){
- const parts=splitVoiceProducts(text);
- if(!parts.length)return;
- const status=document.getElementById("voiceStatus");
- status.style.display="block";
- status.textContent=`Añadiendo ${parts.length} producto${parts.length===1?"":"s"}...`;
- for(const part of parts){
-   const parsed=parseVoiceItem(part);
-   await addVoiceProduct(parsed.name,parsed.quantity);
- }
- await loadProducts();
- status.textContent="✓ Añadido por voz";
- setTimeout(()=>{status.style.display="none";},1800);
-}
+async function processVoiceText(text){const parts=splitVoiceProducts(text);if(!parts.length)return;const status=document.getElementById("voiceStatus");status.style.display="block";status.textContent=`Añadiendo ${parts.length} producto${parts.length===1?"":"s"}...`;for(const part of parts){const parsed=parseVoiceItem(part);await addVoiceProduct(parsed.name,parsed.quantity);}await loadProducts();status.textContent="✓ Añadido por voz";setTimeout(()=>{status.style.display="none";},1800);}
 function startVoiceInput(){
- const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!SpeechRecognition){
-   alert("El reconocimiento de voz no está disponible en este navegador. Prueba con Chrome en Android.");
-   return;
- }
- const recognition=new SpeechRecognition();
- recognition.lang="es-ES";
- recognition.interimResults=false;
- recognition.maxAlternatives=1;
- const button=document.getElementById("voiceButton");
- const status=document.getElementById("voiceStatus");
- button.classList.add("listening");
- status.style.display="block";
- status.textContent="🎙️ Escuchando... Di varios productos separados por “y”.";
- recognition.onresult=event=>{
-   const text=event.results[0][0].transcript;
-   status.textContent=`He oído: ${text}`;
-   processVoiceText(text);
- };
- recognition.onerror=event=>{
-   console.error("Error de voz:",event.error);
-   status.textContent="No te he entendido. Prueba otra vez.";
-   setTimeout(()=>{status.style.display="none";},1800);
- };
- recognition.onend=()=>button.classList.remove("listening");
- recognition.start();
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SpeechRecognition){alert("El reconocimiento de voz no está disponible en este navegador. Prueba con Chrome en Android.");return;}
+ const recognition=new SpeechRecognition();recognition.lang="es-ES";recognition.interimResults=false;recognition.maxAlternatives=1;
+ const button=document.getElementById("voiceButton"),status=document.getElementById("voiceStatus");button.classList.add("listening");status.style.display="block";status.textContent="🎙️ Escuchando... Di varios productos separados por “y”.";
+ recognition.onresult=event=>{const text=event.results[0][0].transcript;status.textContent=`He oído: ${text}`;processVoiceText(text);};
+ recognition.onerror=event=>{console.error("Error de voz:",event.error);status.textContent="No te he entendido. Prueba otra vez.";setTimeout(()=>{status.style.display="none";},1800);};
+ recognition.onend=()=>button.classList.remove("listening");recognition.start();
 }
-
 function handleLoginKey(event){if(event.key==="Enter")login();}
 function handleProductKey(event){if(event.key==="Enter"){document.getElementById("suggestions").style.display="none";addProduct();}}
-async function startApp(){
- const{data:{session}}=await supabaseClient.auth.getSession();
- if(session&&session.user){showApp(session.user);await Promise.all([loadProducts(),loadLearnedProducts()]);renderQuickProducts();}else showLogin();
-}
+async function startApp(){const{data:{session}}=await supabaseClient.auth.getSession();if(session&&session.user){showApp(session.user);await Promise.all([loadProducts(),loadLearnedProducts()]);renderQuickProducts();}else showLogin();}
 supabaseClient.channel("productos-realtime").on("postgres_changes",{event:"*",schema:"public",table:"Productos",filter:`list_id=eq.${LIST_ID}`},()=>loadProducts()).subscribe();
 supabaseClient.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT"){products=[];learnedProducts=[];currentUser=null;showLogin();}});
 document.addEventListener("click",event=>{const area=document.querySelector(".add-area");if(area&&!area.contains(event.target))document.getElementById("suggestions").style.display="none";});
