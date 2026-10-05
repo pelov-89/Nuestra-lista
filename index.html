@@ -189,19 +189,30 @@ const presetProducts = [
  {name:"Nestea maracuyá",supermarket:"Cash Silva"},{name:"Nestea limón",supermarket:"Cash Silva"},{name:"Papel cocina",supermarket:"Cash Silva"}
 ];
 
-const categoryOrder = ["🍎 Fruta y verdura","🥛 Lácteos","🥩 Carnicería","🐟 Pescadería","🥖 Panadería","🥫 Despensa","🥤 Bebidas","🧽 Limpieza y hogar","🛍️ Otros"];
+const categoryOrder = [
+ "🍎 Fruta y verdura","🥛 Lácteos","🥩 Carnicería","🐟 Pescadería","🥖 Panadería",
+ "🥫 Despensa","🧊 Congelados","🥤 Bebidas","🧽 Limpieza","👕 Lavado y plancha",
+ "🏠 Hogar","🚿 Baño e higiene","💄 Maquillaje y belleza","👶 Bebé","🐾 Mascotas","🛍️ Otros"
+];
 const supermarkets = ["Sin asignar","Supercarmela","Cash Silva","DIA","Mercadona","Covirán","Lidl","Carrefour","Aldi"];
 
 function getCategory(product) {
  const text=(product||"").toLowerCase();
- if(["leche","yogur","yogurt","queso","mantequilla","nata","kéfir","kefir"].some(x=>text.includes(x))) return "🥛 Lácteos";
- if(["pollo","carne","ternera","cerdo","hamburguesa","salchicha","pavo","chorizo","jamón","jamon","lomo"].some(x=>text.includes(x))) return "🥩 Carnicería";
- if(["pescado","atún","atun","salmón","salmon","gamba","marisco","merluza","bacalao","calamar","sepia","langostino"].some(x=>text.includes(x))) return "🐟 Pescadería";
- if(["fresa","manzana","plátano","platano","naranja","pera","tomate","lechuga","patata","cebolla","zanahoria","limón","limon","mandarina","melón","melon","sandía","sandia","uva","kiwi","aguacate","pimiento","pepino","calabacín","calabacin","berenjena","ajo","brócoli","brocoli","espinaca","champiñón","champinon"].some(x=>text.includes(x))) return "🍎 Fruta y verdura";
- if(["pan","barra","croissant","magdalena","mollete","tostada"].some(x=>text.includes(x))) return "🥖 Panadería";
- if(["agua","coca","refresco","zumo","cerveza","batido","fanta","nestea","vino"].some(x=>text.includes(x))) return "🥤 Bebidas";
- if(["detergente","lejía","lejia","lavavajillas","suavizante","limpiador","papel higiénico","papel higienico","papel cocina","servilleta","bolsa basura","estropajo","esponja"].some(x=>text.includes(x))) return "🧽 Limpieza y hogar";
- if(["arroz","pasta","aceite","sal","azúcar","azucar","café","cafe","harina","lenteja","garbanzo","judía","judia","galleta","cereal","conserva","pistacho","pipas","té ","te "].some(x=>text.includes(x))) return "🥫 Despensa";
+ if(["congelad","hielo","helado"].some(x=>text.includes(x))) return "🧊 Congelados";
+ if(["pañal","toallitas bebé","toallitas bebe","potito","papilla","leche infantil","chupete","biberón","biberon"].some(x=>text.includes(x))) return "👶 Bebé";
+ if(["pienso","arena gato","arena de gato","comida perro","comida gato","snack perro","snack gato","mascota"].some(x=>text.includes(x))) return "🐾 Mascotas";
+ if(["maquillaje","rímel","rimel","máscara pestañas","mascara pestañas","pintalabios","labial","base maquillaje","colorete","sombra ojos","eyeliner","delineador","esmalte uñas","quitaesmalte","crema facial","sérum","serum"].some(x=>text.includes(x))) return "💄 Maquillaje y belleza";
+ if(["papel higiénico","papel higienico","champú","champu","gel de baño","gel baño","pasta de dientes","dentífrico","dentifrico","cepillo de dientes","enjuague","desodorante","bastoncillo","seda dental","hilo dental","compresa","tampón","tampon","cuchilla","afeitar"].some(x=>text.includes(x))) return "🚿 Baño e higiene";
+ if(["detergente ropa","detergente lavadora","suavizante","quitamanchas","apresto","almidón","almidon","perlas lavado","cápsulas lavadora","capsulas lavadora"].some(x=>text.includes(x))) return "👕 Lavado y plancha";
+ if(["detergente","lejía","lejia","lavavajillas","limpiador","fregasuelos","desinfectante","amoniaco","estropajo","esponja","bayeta","limpiacristales","limpia cristales","multiusos","fregona"].some(x=>text.includes(x))) return "🧽 Limpieza";
+ if(["papel cocina","servilleta","bolsa basura","papel aluminio","albal","film transparente","bombilla","pila","vela","cerilla","ambientador"].some(x=>text.includes(x))) return "🏠 Hogar";
+ if(["leche","yogur","yogurt","queso","mantequilla","nata","kéfir","kefir","cuajada"].some(x=>text.includes(x))) return "🥛 Lácteos";
+ if(["pescado","atún","atun","salmón","salmon","gamba","marisco","merluza","bacalao","calamar","sepia","langostino","sardina","boquerón","boqueron"].some(x=>text.includes(x))) return "🐟 Pescadería";
+ if(["pan","barra","croissant","magdalena","mollete","tostada","baguette"].some(x=>text.includes(x))) return "🥖 Panadería";
+ if(["pollo","carne","ternera","cerdo","hamburguesa","salchicha","pavo","chorizo","jamón","jamon","lomo","bacon","panceta"].some(x=>text.includes(x))) return "🥩 Carnicería";
+ if(["fresa","manzana","plátano","platano","naranja","pera","tomate","lechuga","patata","cebolla","zanahoria","limón","limon","mandarina","melón","melon","sandía","sandia","uva","kiwi","aguacate","pimiento","pepino","calabacín","calabacin","berenjena","ajo","brócoli","brocoli","espinaca","champiñón","champinon","piña","mango","melocotón","melocoton","ciruela","coliflor"].some(x=>text.includes(x))) return "🍎 Fruta y verdura";
+ if(["agua","coca","refresco","zumo","cerveza","batido","fanta","nestea","vino","tónica","tonica","gaseosa"].some(x=>text.includes(x))) return "🥤 Bebidas";
+ if(["arroz","pasta","aceite","sal","azúcar","azucar","café","cafe","harina","lenteja","garbanzo","judía","judia","galleta","cereal","conserva","pistacho","pipas","té ","te ","salsa","tomate frito","especia","cacao","chocolate","frutos secos"].some(x=>text.includes(x))) return "🥫 Despensa";
  return "🛍️ Otros";
 }
 function escapeHtml(text){const d=document.createElement("div");d.textContent=text||"";return d.innerHTML;}
