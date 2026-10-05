@@ -41,6 +41,7 @@
     .summary-card { flex:1; background:white; border-radius:14px; padding:12px 6px; text-align:center; box-shadow:0 3px 14px rgba(0,0,0,.05); }
     .summary-value { display:block; font-size:19px; font-weight:800; color:var(--green-dark); }
     .summary-label { font-size:11px; color:var(--muted); }
+    .monthly-spend-card{display:flex;align-items:center;justify-content:center;gap:12px;background:white;border-radius:16px;padding:14px;margin:-6px 0 18px;box-shadow:0 3px 14px rgba(0,0,0,.05);border:1px solid #dcfce7}.monthly-spend-icon{font-size:28px}.monthly-spend-label{display:block;font-size:12px;color:var(--muted);font-weight:700}.monthly-spend-value{display:block;font-size:24px;font-weight:900;color:var(--green-dark);margin-top:2px}
     .finish-area { margin:0 0 18px; }
     .finish-button { width:100%; border:0; border-radius:14px; padding:13px 16px; background:#166534; color:white; font-size:15px; font-weight:800; box-shadow:0 3px 14px rgba(0,0,0,.08); }
     .finish-button:disabled { opacity:.55; cursor:default; }
@@ -104,7 +105,7 @@
     body[data-theme="supermarkets"] .list{box-shadow:none;border:1px solid #eef0ef}
     body[data-theme="dark"]{--background:#111827;--card:#1f2937;--text:#f9fafb;--muted:#9ca3af;--border:#374151;--green-soft:#164e2e;color:var(--text)}
     body[data-theme="dark"] header{background:linear-gradient(135deg,#052e16,#166534)}
-    body[data-theme="dark"] .user-bar,body[data-theme="dark"] .add-box,body[data-theme="dark"] .summary-card,body[data-theme="dark"] .list,body[data-theme="dark"] .quick-product,body[data-theme="dark"] .history-panel,body[data-theme="dark"] .history-purchase,body[data-theme="dark"] .history-button,body[data-theme="dark"] .settings-panel{background:#1f2937;color:#f9fafb;border-color:#374151}
+    body[data-theme="dark"] .user-bar,body[data-theme="dark"] .add-box,body[data-theme="dark"] .summary-card,body[data-theme="dark"] .monthly-spend-card,body[data-theme="dark"] .list,body[data-theme="dark"] .quick-product,body[data-theme="dark"] .history-panel,body[data-theme="dark"] .history-purchase,body[data-theme="dark"] .history-button,body[data-theme="dark"] .settings-panel{background:#1f2937;color:#f9fafb;border-color:#374151}
     body[data-theme="dark"] input,body[data-theme="dark"] .price-button,body[data-theme="dark"] .history-close,body[data-theme="dark"] .quick-remove{background:#374151;color:#f9fafb}
     body[data-theme="dark"] .category-title,body[data-theme="dark"] .quick-title,body[data-theme="dark"] .quick-name{color:#f3f4f6}
     body[data-theme="dark"] .item{border-color:#374151}
@@ -145,6 +146,7 @@
 <div class="summary-card"><span id="favoriteCount" class="summary-value">0</span><span class="summary-label">Favoritos</span></div>
 <div class="summary-card"><span id="estimatedTotal" class="summary-value">0,00 €</span><span class="summary-label">Estimado</span></div>
 </div>
+<div class="monthly-spend-card"><span class="monthly-spend-icon">📊</span><div><span class="monthly-spend-label">Gastado este mes</span><span id="monthlySpend" class="monthly-spend-value">0,00 €</span></div></div>
 <div class="finish-area"><button id="finishButton" class="finish-button" onclick="finishPurchase()">🧾 Finalizar compra</button><div class="finish-help">Guarda en el historial y retira los productos marcados ✓</div></div><button class="history-button" onclick="toggleHistory()">🧾 Ver historial de compras</button><section id="historyPanel" class="history-panel"><div class="history-header"><span class="history-title">🧾 Historial de compras</span><button class="history-close" onclick="toggleHistory(false)">Cerrar</button></div><div id="historyContent"></div></section>
 <section id="quickSection" class="quick-section"><div class="quick-header"><span class="quick-title">⭐ Habituales</span><span class="quick-subtitle">Toca para añadir</span></div><div id="quickProducts" class="quick-products"></div></section>
 <div id="shoppingList"><div class="list"><div class="loading">Cargando lista...</div></div></div>
@@ -244,7 +246,7 @@ async function login(){
  const{data,error}=await supabaseClient.auth.signInWithPassword({email,password});
  loginButton.disabled=false;loginButton.textContent="Iniciar sesión";
  if(error){console.error(error);errorBox.textContent="No se ha podido iniciar sesión. Revisa el correo y la contraseña.";return;}
- passwordInput.value="";showApp(data.user);await Promise.all([loadProducts(),loadLearnedProducts()]);renderQuickProducts();
+ passwordInput.value="";showApp(data.user);await Promise.all([loadProducts(),loadLearnedProducts(),loadMonthlySpend()]);renderQuickProducts();
 }
 async function logout(){await supabaseClient.auth.signOut();products=[];learnedProducts=[];currentUser=null;showLogin();}
 
@@ -404,12 +406,20 @@ async function finishPurchase(){
  const{error:deleteError}=await supabaseClient.from("Productos").delete().in("id",ids).eq("list_id",LIST_ID);
  if(deleteError){console.error("Error retirando productos:",deleteError);alert("La compra se guardó en el historial, pero no se pudieron retirar algunos productos de la lista.");}
  else alert("Compra finalizada y guardada en el historial 🧾");
- button.disabled=false;button.textContent="🧾 Finalizar compra";await loadProducts();
+ button.disabled=false;button.textContent="🧾 Finalizar compra";await Promise.all([loadProducts(),loadMonthlySpend()]);
 }
 
+async function loadMonthlySpend(){
+ const el=document.getElementById("monthlySpend");if(!el)return;
+ const now=new Date(),start=new Date(now.getFullYear(),now.getMonth(),1),next=new Date(now.getFullYear(),now.getMonth()+1,1);
+ const{data,error}=await supabaseClient.from("purchase_history").select("quantity, price, purchased_at").eq("list_id",LIST_ID).gte("purchased_at",start.toISOString()).lt("purchased_at",next.toISOString());
+ if(error){console.error("Error calculando gasto mensual:",error);el.textContent="—";return;}
+ const total=(data||[]).reduce((sum,row)=>sum+(Number(row.price)||0)*(Number(row.quantity)||1),0);
+ el.textContent=total.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
+}
 async function toggleHistory(force){const panel=document.getElementById("historyPanel");const show=typeof force==="boolean"?force:panel.style.display!=="block";panel.style.display=show?"block":"none";if(show){await loadPurchaseHistory();panel.scrollIntoView({behavior:"smooth",block:"start"});}}
 async function loadPurchaseHistory(){const content=document.getElementById("historyContent");content.innerHTML='<div class="loading">Cargando historial...</div>';const{data,error}=await supabaseClient.from("purchase_history").select("id, product_name, quantity, price, supermarket, category, purchased_at").eq("list_id",LIST_ID).order("purchased_at",{ascending:false}).limit(300);if(error){console.error("Error cargando historial:",error);content.innerHTML='<div class="empty">No se pudo cargar el historial.</div>';return;}const rows=data||[];if(!rows.length){content.innerHTML='<div class="empty">Todavía no hay compras guardadas 🛒</div>';return;}const groups=[];rows.forEach(row=>{const date=new Date(row.purchased_at),key=Math.floor(date.getTime()/60000);let group=groups.find(g=>Math.abs(g.key-key)<=2);if(!group){group={key,date,items:[]};groups.push(group);}group.items.push(row);});content.innerHTML="";groups.forEach(group=>{const total=group.items.reduce((s,i)=>s+(Number(i.price)||0)*(Number(i.quantity)||1),0),box=document.createElement("div");box.className="history-purchase";const dateText=group.date.toLocaleString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"});box.innerHTML=`<button class="history-delete" aria-label="Borrar compra">×</button><div class="history-date">${escapeHtml(dateText)}</div><div class="history-total">Total: ${total.toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</div>`;box.querySelector(".history-delete").onclick=()=>deleteHistoryPurchase(group.items,dateText);const bySupermarket={};group.items.forEach(item=>{const s=(item.supermarket||"").trim()||"Sin asignar";if(!bySupermarket[s])bySupermarket[s]=[];bySupermarket[s].push(item);});Object.entries(bySupermarket).forEach(([supermarket,items])=>{const band=document.createElement("div");band.className="history-supermarket";band.textContent="🏪 "+supermarket.toUpperCase();box.appendChild(band);items.forEach(item=>{const q=Number(item.quantity)||1,price=Number(item.price)||0,row=document.createElement("div");row.className="history-item";row.innerHTML=`<div><strong>${escapeHtml(item.product_name)}</strong><div class="history-item-meta">×${q}</div></div><div class="history-item-price">${(q*price).toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</div>`;box.appendChild(row);});});content.appendChild(box);});}
-async function deleteHistoryPurchase(items,dateText){if(!items||!items.length)return;const ok=confirm(`¿Borrar la compra del ${dateText}?\n\nEsta acción eliminará esta compra del historial.`);if(!ok)return;const ids=items.map(item=>item.id);const{error}=await supabaseClient.from("purchase_history").delete().in("id",ids).eq("list_id",LIST_ID);if(error){console.error("Error borrando compra:",error);alert("No se pudo borrar esta compra del historial.");return;}await loadPurchaseHistory();}
+async function deleteHistoryPurchase(items,dateText){if(!items||!items.length)return;const ok=confirm(`¿Borrar la compra del ${dateText}?\n\nEsta acción eliminará esta compra del historial.`);if(!ok)return;const ids=items.map(item=>item.id);const{error}=await supabaseClient.from("purchase_history").delete().in("id",ids).eq("list_id",LIST_ID);if(error){console.error("Error borrando compra:",error);alert("No se pudo borrar esta compra del historial.");return;}await Promise.all([loadPurchaseHistory(),loadMonthlySpend()]);}
 
 function splitVoiceProducts(text){let clean=(text||"").trim();clean=clean.replace(/\s+y\s+/gi,",");return clean.split(",").map(x=>x.trim()).filter(Boolean);}
 function parseVoiceItem(text){let item=text.trim();let quantity=1;const numberWords={un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10};const match=item.match(/^(?:(\d+)|([a-záéíóúñ]+))\s+(.+)$/i);if(match){const q=match[1]?Number(match[1]):numberWords[(match[2]||"").toLowerCase()];if(q){quantity=q;item=match[3].trim();}}return{name:item,quantity};}
@@ -447,7 +457,7 @@ function openSettings(){document.getElementById("settingsOverlay").classList.add
 function closeSettings(event){if(event&&event.target!==document.getElementById("settingsOverlay"))return;document.getElementById("settingsOverlay").classList.remove("open");}
 applySavedTheme();
 
-async function startApp(){const{data:{session}}=await supabaseClient.auth.getSession();if(session&&session.user){showApp(session.user);await Promise.all([loadProducts(),loadLearnedProducts()]);renderQuickProducts();}else showLogin();}
+async function startApp(){const{data:{session}}=await supabaseClient.auth.getSession();if(session&&session.user){showApp(session.user);await Promise.all([loadProducts(),loadLearnedProducts(),loadMonthlySpend()]);renderQuickProducts();}else showLogin();}
 supabaseClient.channel("productos-realtime").on("postgres_changes",{event:"*",schema:"public",table:"Productos",filter:`list_id=eq.${LIST_ID}`},()=>loadProducts()).subscribe();
 supabaseClient.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT"){products=[];learnedProducts=[];currentUser=null;showLogin();}});
 document.addEventListener("click",event=>{const area=document.querySelector(".add-area");if(area&&!area.contains(event.target))document.getElementById("suggestions").style.display="none";});
