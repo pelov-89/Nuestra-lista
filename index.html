@@ -153,6 +153,16 @@
 <div id="shoppingList"><div class="list"><div class="loading">Cargando lista...</div></div></div>
 </section>
 
+<div id="spendOverlay" class="spend-overlay" onclick="closeSpendBreakdown(event)">
+  <div class="spend-panel" onclick="event.stopPropagation()">
+    <div class="spend-head">
+      <div class="spend-title">📊 Gasto por supermercado</div>
+      <button class="spend-close" onclick="closeSpendBreakdown()">×</button>
+    </div>
+    <div id="spendBreakdownContent"></div>
+  </div>
+</div>
+
 <div id="settingsOverlay" class="settings-overlay" onclick="closeSettings(event)">
   <div class="settings-panel" onclick="event.stopPropagation()">
     <div class="settings-head"><h2>⚙️ Ajustes</h2><button class="settings-x" onclick="closeSettings()">×</button></div>
