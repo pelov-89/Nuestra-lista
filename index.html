@@ -472,7 +472,7 @@ async function renderSpendBreakdown(){
  if(error){console.error(error);content.innerHTML='<div class="empty">No se pudo cargar el desglose.</div>';return;}
  const totals={};let grand=0;
  (data||[]).forEach(r=>{const name=(r.supermarket||"").trim()||"Sin asignar",amount=(Number(r.price)||0)*(Number(r.quantity)||1);totals[name]=(totals[name]||0)+amount;grand+=amount;});
- const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+ const entries=Object.entries(totals).filter(([,total])=>total>0).sort((a,b)=>b[1]-a[1]);
  if(!entries.length){content.innerHTML='<div class="empty">No hay compras guardadas en este mes.</div><div class="spend-total"><span>TOTAL</span><span>0,00 €</span></div>';return;}
  content.innerHTML=entries.map(([name,total])=>`<div class="spend-row"><span>🏪 ${escapeHtml(name)}</span><strong>${total.toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</strong></div>`).join("")+`<div class="spend-total"><span>TOTAL</span><span>${grand.toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</span></div>`;
 }
