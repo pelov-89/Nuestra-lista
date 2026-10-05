@@ -42,7 +42,7 @@
     .summary-value { display:block; font-size:19px; font-weight:800; color:var(--green-dark); }
     .summary-label { font-size:11px; color:var(--muted); }
     .monthly-spend-card{cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;background:white;border-radius:16px;padding:14px;margin:-6px 0 18px;box-shadow:0 3px 14px rgba(0,0,0,.05);border:1px solid #dcfce7}.monthly-spend-icon{font-size:28px}.monthly-spend-label{display:block;font-size:12px;color:var(--muted);font-weight:700}.monthly-spend-value{display:block;font-size:24px;font-weight:900;color:var(--green-dark);margin-top:2px}
-    .spend-overlay{display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);padding:18px;align-items:center;justify-content:center}.spend-overlay.open{display:flex}.spend-panel{width:min(100%,460px);max-height:80vh;overflow:auto;background:white;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.spend-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.spend-title{font-size:20px;font-weight:900;color:#166534}.spend-close{border:0;background:#f3f4f6;border-radius:10px;padding:7px 11px;font-size:18px}.spend-row{display:flex;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);font-weight:700}.spend-row strong{color:var(--green-dark)}.spend-total{display:flex;justify-content:space-between;padding:15px 4px 3px;font-size:18px;font-weight:900;color:var(--green-dark)}body[data-theme="dark"] .spend-panel{background:#111827;color:#f3f4f6}body[data-theme="dark"] .spend-close{background:#374151;color:white}
+    .spend-overlay{display:none;position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.45);padding:18px;align-items:center;justify-content:center}.spend-overlay.open{display:flex}.spend-panel{width:min(100%,460px);max-height:80vh;overflow:auto;background:white;border-radius:20px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.spend-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.spend-title{font-size:20px;font-weight:900;color:#166534}.spend-close{border:0;background:#f3f4f6;border-radius:10px;padding:7px 11px;font-size:18px}.spend-month-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}.spend-month-btn{border:0;background:#eef7f0;color:#166534;border-radius:10px;width:42px;height:38px;font-size:22px;font-weight:900}.spend-month-btn:disabled{opacity:.35}.spend-month-label{flex:1;text-align:center;font-weight:900;text-transform:capitalize;color:#374151}.spend-row{display:flex;justify-content:space-between;gap:12px;padding:12px 4px;border-bottom:1px solid var(--border);font-weight:700}.spend-row strong{color:var(--green-dark)}.spend-total{display:flex;justify-content:space-between;padding:15px 4px 3px;font-size:18px;font-weight:900;color:var(--green-dark)}body[data-theme="dark"] .spend-panel{background:#111827;color:#f3f4f6}body[data-theme="dark"] .spend-close{background:#374151;color:white}
     .finish-area { margin:0 0 18px; }
     .finish-button { width:100%; border:0; border-radius:14px; padding:13px 16px; background:#166534; color:white; font-size:15px; font-weight:800; box-shadow:0 3px 14px rgba(0,0,0,.08); }
     .finish-button:disabled { opacity:.55; cursor:default; }
@@ -168,6 +168,11 @@
       <div class="spend-title">📊 Gasto por supermercado</div>
       <button class="spend-close" onclick="closeSpendBreakdown()">×</button>
     </div>
+    <div class="spend-month-nav">
+      <button class="spend-month-btn" onclick="changeSpendMonth(-1)" aria-label="Mes anterior">‹</button>
+      <div id="spendMonthLabel" class="spend-month-label">Este mes</div>
+      <button id="spendNextMonth" class="spend-month-btn" onclick="changeSpendMonth(1)" aria-label="Mes siguiente">›</button>
+    </div>
     <div id="spendBreakdownContent"></div>
   </div>
 </div>
@@ -197,7 +202,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://hnytuqklpuhiqeapkykx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN";
+const SUPABASE_KEY = "CLAVE OCULTA";
 const LIST_ID = "59d10737-51e8-4edf-9217-63e25a5f4a6b";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let products = [], currentUser = null, learnedProducts = [];
@@ -443,14 +448,47 @@ async function loadMonthlySpend(){
  const total=(data||[]).reduce((sum,row)=>sum+(Number(row.price)||0)*(Number(row.quantity)||1),0);
  el.textContent=total.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
 }
-async function openSpendBreakdown(){
- const overlay=document.getElementById("spendOverlay"),content=document.getElementById("spendBreakdownContent");overlay.classList.add("open");content.innerHTML='<div class="loading">Calculando...</div>';
- const now=new Date(),start=new Date(now.getFullYear(),now.getMonth(),1),next=new Date(now.getFullYear(),now.getMonth()+1,1);
+let spendViewDate=new Date();
+
+function spendMonthRange(date){
+ const start=new Date(date.getFullYear(),date.getMonth(),1);
+ const next=new Date(date.getFullYear(),date.getMonth()+1,1);
+ return{start,next};
+}
+function updateSpendMonthHeader(){
+ const label=document.getElementById("spendMonthLabel");
+ const nextBtn=document.getElementById("spendNextMonth");
+ const now=new Date();
+ const isCurrent=spendViewDate.getFullYear()===now.getFullYear()&&spendViewDate.getMonth()===now.getMonth();
+ if(label)label.textContent=spendViewDate.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+ if(nextBtn)nextBtn.disabled=isCurrent;
+}
+async function renderSpendBreakdown(){
+ const content=document.getElementById("spendBreakdownContent");
+ updateSpendMonthHeader();
+ content.innerHTML='<div class="loading">Calculando...</div>';
+ const{start,next}=spendMonthRange(spendViewDate);
  const{data,error}=await supabaseClient.from("purchase_history").select("quantity, price, supermarket, purchased_at").eq("list_id",LIST_ID).gte("purchased_at",start.toISOString()).lt("purchased_at",next.toISOString());
  if(error){console.error(error);content.innerHTML='<div class="empty">No se pudo cargar el desglose.</div>';return;}
- const totals={};let grand=0;(data||[]).forEach(r=>{const name=(r.supermarket||"").trim()||"Sin asignar",amount=(Number(r.price)||0)*(Number(r.quantity)||1);totals[name]=(totals[name]||0)+amount;grand+=amount;});
- const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);if(!entries.length){content.innerHTML='<div class="empty">Todavía no hay gastos guardados este mes.</div>';return;}
+ const totals={};let grand=0;
+ (data||[]).forEach(r=>{const name=(r.supermarket||"").trim()||"Sin asignar",amount=(Number(r.price)||0)*(Number(r.quantity)||1);totals[name]=(totals[name]||0)+amount;grand+=amount;});
+ const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+ if(!entries.length){content.innerHTML='<div class="empty">No hay compras guardadas en este mes.</div><div class="spend-total"><span>TOTAL</span><span>0,00 €</span></div>';return;}
  content.innerHTML=entries.map(([name,total])=>`<div class="spend-row"><span>🏪 ${escapeHtml(name)}</span><strong>${total.toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</strong></div>`).join("")+`<div class="spend-total"><span>TOTAL</span><span>${grand.toLocaleString("es-ES",{style:"currency",currency:"EUR"})}</span></div>`;
+}
+async function openSpendBreakdown(){
+ spendViewDate=new Date();
+ const overlay=document.getElementById("spendOverlay");
+ overlay.classList.add("open");
+ await renderSpendBreakdown();
+}
+async function changeSpendMonth(delta){
+ const now=new Date();
+ const candidate=new Date(spendViewDate.getFullYear(),spendViewDate.getMonth()+delta,1);
+ const currentMonth=new Date(now.getFullYear(),now.getMonth(),1);
+ if(candidate>currentMonth)return;
+ spendViewDate=candidate;
+ await renderSpendBreakdown();
 }
 function closeSpendBreakdown(event){const overlay=document.getElementById("spendOverlay");if(event&&event.target!==overlay)return;overlay.classList.remove("open");}
 async function toggleHistory(force){const panel=document.getElementById("historyPanel");const show=typeof force==="boolean"?force:panel.style.display!=="block";panel.style.display=show?"block":"none";if(show){await loadPurchaseHistory();panel.scrollIntoView({behavior:"smooth",block:"start"});}}
