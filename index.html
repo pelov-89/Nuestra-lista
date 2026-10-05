@@ -489,8 +489,10 @@ async function renderMonthComparison(currentTotal){
  const currentName=spendViewDate.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
  const previousName=prevDate.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
  const money=n=>n.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
- let diffText=diff===0?"Sin diferencia":(diff>0?`+${money(diff)}`:money(diff));
- box.innerHTML=`<div class="spend-compare"><div class="spend-compare-title">Comparación con el mes anterior</div><div class="spend-compare-row"><span>${escapeHtml(currentName)}</span><span>${money(currentTotal)}</span></div><div class="spend-compare-row"><span>${escapeHtml(previousName)}</span><span>${money(previousTotal)}</span></div><div class="spend-compare-diff"><span>Diferencia</span><span>${diffText}</span></div></div>`;
+ let diffText="➖ Has gastado lo mismo que el mes anterior";
+ if(diff>0)diffText=`↑ Has gastado ${money(diff)} más`;
+ if(diff<0)diffText=`↓ Has gastado ${money(Math.abs(diff))} menos`;
+ box.innerHTML=`<div class="spend-compare"><div class="spend-compare-title">Comparación con el mes anterior</div><div class="spend-compare-row"><span>${escapeHtml(currentName)}</span><span>${money(currentTotal)}</span></div><div class="spend-compare-row"><span>${escapeHtml(previousName)}</span><span>${money(previousTotal)}</span></div><div class="spend-compare-diff"><span>${diffText}</span></div></div>`;
 }
 async function openSpendBreakdown(){
  spendViewDate=new Date();
