@@ -90,6 +90,15 @@
     .settings-head h2{margin:0;font-size:23px}
     .settings-x{border:0;background:#f3f4f6;border-radius:50%;width:36px;height:36px;font-size:20px;font-weight:800}
     .settings-text{margin:0 0 16px;color:var(--muted);font-size:13px}
+
+    .data-settings-box{margin-top:16px;padding:14px;border-radius:16px;background:#fff7f7;border:1px solid #fecaca}
+    .data-settings-title{font-weight:900;font-size:16px;color:#991b1b;margin-bottom:5px}
+    .data-settings-text{font-size:13px;color:var(--muted);line-height:1.4;margin-bottom:12px}
+    .danger-button{width:100%;border:1px solid #fecaca;background:#fff;color:#b91c1c;border-radius:12px;padding:12px;font-weight:900;font-size:14px}
+    .danger-button:disabled{opacity:.55}
+    body[data-theme="dark"] .data-settings-box{background:#2b1f22;border-color:#7f1d1d}
+    body[data-theme="dark"] .data-settings-title{color:#fecaca}
+    body[data-theme="dark"] .danger-button{background:#1f2937;color:#fecaca;border-color:#7f1d1d}
     .theme-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .theme-option{border:2px solid var(--border);background:white;border-radius:16px;padding:12px;text-align:left}
     .theme-option.active{border-color:var(--green);box-shadow:0 0 0 2px var(--green-soft)}
@@ -175,6 +184,12 @@
       <button class="theme-option" data-theme-choice="custom" onclick="setTheme('custom')"><span class="theme-icon">⭐</span><span class="theme-name">Mi estilo</span><span class="theme-desc">Una base especial para personalizarla a tu gusto.</span></button>
     </div>
     <div class="custom-box"><div class="custom-title">⭐ Mi estilo</div><div class="custom-text">Ya puedes elegirlo. Más adelante añadiremos aquí tamaño de letra, colores, vista compacta y más opciones sin tocar la lista compartida.</div></div>
+
+    <div class="data-settings-box">
+      <div class="data-settings-title">🧹 Datos e historial</div>
+      <div class="data-settings-text">Borra las compras guardadas si eran pruebas. No se borran tus productos habituales, categorías aprendidas ni supermercados recordados.</div>
+      <button id="clearHistoryButton" class="danger-button" onclick="clearPurchaseHistory()">🗑️ Borrar historial de compras</button>
+    </div>
   </div>
 </div>
 
@@ -474,6 +489,23 @@ function setTheme(theme,save=true){
  if(save)localStorage.setItem(THEME_STORAGE_KEY,theme);
  document.querySelectorAll(".theme-option").forEach(btn=>btn.classList.toggle("active",btn.dataset.themeChoice===theme));
 }
+
+async function clearPurchaseHistory(){
+ const ok=confirm("¿Borrar TODO el historial de compras?\n\nÚsalo si las compras guardadas eran de prueba. No se borrarán Habituales, categorías aprendidas ni supermercados recordados.\n\nEsta acción no se puede deshacer.");
+ if(!ok)return;
+ const button=document.getElementById("clearHistoryButton");
+ if(button){button.disabled=true;button.textContent="Borrando historial...";}
+ const{error}=await supabaseClient.from("purchase_history").delete().eq("list_id",LIST_ID);
+ if(button){button.disabled=false;button.textContent="🗑️ Borrar historial de compras";}
+ if(error){console.error("Error borrando historial completo:",error);alert("No se pudo borrar el historial.");return;}
+ closeSettings();
+ closeSpendBreakdown();
+ await loadMonthlySpend();
+ const historyOverlay=document.getElementById("historyOverlay");
+ if(historyOverlay&&historyOverlay.classList.contains("open"))await loadPurchaseHistory();
+ alert("Historial de compras borrado. Gastado este mes vuelve a 0,00 €.");
+}
+
 function openSettings(){document.getElementById("settingsOverlay").classList.add("open");setTheme(document.body.getAttribute("data-theme")||"classic",false);}
 function closeSettings(event){if(event&&event.target!==document.getElementById("settingsOverlay"))return;document.getElementById("settingsOverlay").classList.remove("open");}
 applySavedTheme();
