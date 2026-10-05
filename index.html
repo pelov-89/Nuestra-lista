@@ -223,8 +223,15 @@ function rememberedData(name){
  const learned=getLearned(name),preset=getPreset(name);
  return {
    price: learned&&Number(learned.last_price)>0 ? Number(learned.last_price) : 0,
-   supermarket: (learned&&learned.last_supermarket)|| (preset&&preset.supermarket) || ""
+   supermarket: (learned&&learned.last_supermarket)|| (preset&&preset.supermarket) || "",
+   category: learned&&categoryOrder.includes(learned.category) ? learned.category : getCategory(name)
  };
+}
+function effectiveCategory(product){
+ if(product&&categoryOrder.includes(product.category)) return product.category;
+ const learned=getLearned(product?.name||"");
+ if(learned&&categoryOrder.includes(learned.category)) return learned.category;
+ return getCategory(product?.name||"");
 }
 function showLogin(){document.getElementById("loginView").style.display="block";document.getElementById("appView").style.display="none";}
 function showApp(user){currentUser=user;document.getElementById("loginView").style.display="none";document.getElementById("appView").style.display="block";document.getElementById("userEmail").textContent=user.email||"";}
@@ -245,13 +252,13 @@ async function loadProducts(){
  const list=document.getElementById("shoppingList");
  const{data,error}=await supabaseClient.from("Productos").select("id, Nombre, Cantidad, Categoria, Comprado, list_id, added_by, price, favorite, supermarket").eq("list_id",LIST_ID);
  if(error){console.error("Error cargando productos:",error);list.innerHTML='<div class="list"><div class="empty">No se ha podido cargar la lista.</div></div>';return;}
- products=(data||[]).map((p,position)=>({id:p.id,name:p.Nombre,quantity:p.Cantidad||1,completed:!!p.Comprado,addedBy:p.added_by,price:Number(p.price)||0,favorite:!!p.favorite,supermarket:p.supermarket||"",position}));
- products.sort((a,b)=>{const ca=categoryOrder.indexOf(getCategory(a.name)),cb=categoryOrder.indexOf(getCategory(b.name));if(ca!==cb)return ca-cb;const byName=(a.name||"").localeCompare(b.name||"","es",{sensitivity:"base"});if(byName!==0)return byName;return String(a.id).localeCompare(String(b.id));});
+ products=(data||[]).map((p,position)=>({id:p.id,name:p.Nombre,quantity:p.Cantidad||1,category:p.Categoria||"",completed:!!p.Comprado,addedBy:p.added_by,price:Number(p.price)||0,favorite:!!p.favorite,supermarket:p.supermarket||"",position}));
+ products.sort((a,b)=>{const ca=categoryOrder.indexOf(effectiveCategory(a)),cb=categoryOrder.indexOf(effectiveCategory(b));if(ca!==cb)return ca-cb;const byName=(a.name||"").localeCompare(b.name||"","es",{sensitivity:"base"});if(byName!==0)return byName;return String(a.id).localeCompare(String(b.id));});
  renderList();renderQuickProducts();
 }
 
 async function loadLearnedProducts(){
- const{data,error}=await supabaseClient.from("product_history").select("product_name, times_added, last_price, last_supermarket, hidden_from_quick").eq("list_id",LIST_ID).order("times_added",{ascending:false}).limit(100);
+ const{data,error}=await supabaseClient.from("product_history").select("product_name, times_added, last_price, last_supermarket, hidden_from_quick, category").eq("list_id",LIST_ID).order("times_added",{ascending:false}).limit(100);
  if(error){console.error("Error cargando habituales:",error);learnedProducts=[];renderQuickProducts();return;}
  learnedProducts=data||[];renderQuickProducts();
 }
@@ -294,7 +301,7 @@ function renderList(){
  const list=document.getElementById("shoppingList");list.innerHTML="";updateSummary();
  if(!products.length){list.innerHTML='<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';return;}
  const groups={};
- products.forEach((product,index)=>{const supermarket=(product.supermarket||"").trim()||"Sin asignar";const category=getCategory(product.name);if(!groups[supermarket])groups[supermarket]={};if(!groups[supermarket][category])groups[supermarket][category]=[];groups[supermarket][category].push({product,index});});
+ products.forEach((product,index)=>{const supermarket=(product.supermarket||"").trim()||"Sin asignar";const category=effectiveCategory(product);if(!groups[supermarket])groups[supermarket]={};if(!groups[supermarket][category])groups[supermarket][category]=[];groups[supermarket][category].push({product,index});});
  const supermarketOrder=[...supermarkets,...Object.keys(groups).filter(x=>!supermarkets.includes(x))];
  supermarketOrder.filter(s=>groups[s]).forEach(supermarket=>{
    const supermarketBox=document.createElement("section");supermarketBox.className="supermarket-section";supermarketBox.innerHTML=`<div class="supermarket-title">🏪 ${escapeHtml(supermarket.toUpperCase())}</div>`;
@@ -307,7 +314,9 @@ function renderList(){
        const priceText=product.price>0?`${product.price.toFixed(2).replace(".",",")} € ud.`:"Añadir precio";
        const selectedSupermarket=(product.supermarket||"").trim()||"Sin asignar";
        const supermarketOptions=supermarkets.map(name=>`<option value="${escapeHtml(name)}" ${name===selectedSupermarket?"selected":""}>${escapeHtml(name)}</option>`).join("");
-       item.innerHTML=`<button class="check-button" onclick="toggleProduct(${index})">${product.completed?"✓":""}</button><div class="product-info"><div class="product-name ${product.completed?"completed":""}">${escapeHtml(product.name)}</div><div class="product-meta">${escapeHtml(addedText)}</div><div class="controls"><button class="qty-button" onclick="changeQuantity(${index},-1)">−</button><span class="quantity">×${product.quantity}</span><button class="qty-button" onclick="changeQuantity(${index},1)">+</button><button class="price-button" onclick="setPrice(${index})">${priceText}</button><select class="supermarket-select" onchange="setSupermarket(${index},this.value)">${supermarketOptions}</select></div></div><button class="favorite-button ${product.favorite?"active":""}" onclick="toggleFavorite(${index})" aria-label="Favorito">★</button><button class="delete-button" onclick="deleteProduct(${index})" aria-label="Borrar">🗑️</button>`;
+       const selectedCategory=effectiveCategory(product);
+       const categoryOptions=categoryOrder.map(name=>`<option value="${escapeHtml(name)}" ${name===selectedCategory?"selected":""}>${escapeHtml(name)}</option>`).join("");
+       item.innerHTML=`<button class="check-button" onclick="toggleProduct(${index})">${product.completed?"✓":""}</button><div class="product-info"><div class="product-name ${product.completed?"completed":""}">${escapeHtml(product.name)}</div><div class="product-meta">${escapeHtml(addedText)}</div><div class="controls"><button class="qty-button" onclick="changeQuantity(${index},-1)">−</button><span class="quantity">×${product.quantity}</span><button class="qty-button" onclick="changeQuantity(${index},1)">+</button><button class="price-button" onclick="setPrice(${index})">${priceText}</button><select class="supermarket-select" onchange="setSupermarket(${index},this.value)">${supermarketOptions}</select><select class="supermarket-select" onchange="setCategory(${index},this.value)" aria-label="Cambiar categoría">${categoryOptions}</select></div></div><button class="favorite-button ${product.favorite?"active":""}" onclick="toggleFavorite(${index})" aria-label="Favorito">★</button><button class="delete-button" onclick="deleteProduct(${index})" aria-label="Borrar">🗑️</button>`;
        categoryList.appendChild(item);
      });supermarketBox.appendChild(box);
    });list.appendChild(supermarketBox);
@@ -323,7 +332,7 @@ function showSuggestions(){
 async function learnProduct(name,changes={}){
  if(!currentUser)return;
  const normalized=name.trim();
- const{data,error}=await supabaseClient.from("product_history").select("id, times_added, last_price, last_supermarket").eq("list_id",LIST_ID).eq("user_id",currentUser.id).ilike("product_name",normalized).maybeSingle();
+ const{data,error}=await supabaseClient.from("product_history").select("id, times_added, last_price, last_supermarket, category").eq("list_id",LIST_ID).eq("user_id",currentUser.id).ilike("product_name",normalized).maybeSingle();
  if(error){console.error("Error buscando habitual:",error);return;}
  if(data){
    const update={...changes};
@@ -332,7 +341,7 @@ async function learnProduct(name,changes={}){
    if(Object.keys(update).length)await supabaseClient.from("product_history").update(update).eq("id",data.id);
  }else{
    const preset=getPreset(normalized);
-   const row={user_id:currentUser.id,list_id:LIST_ID,product_name:normalized,category:getCategory(normalized),times_added:changes.incrementTimes?1:0,last_supermarket:changes.last_supermarket??preset?.supermarket??null,last_price:changes.last_price??null};
+   const row={user_id:currentUser.id,list_id:LIST_ID,product_name:normalized,category:changes.category||getCategory(normalized),times_added:changes.incrementTimes?1:0,last_supermarket:changes.last_supermarket??preset?.supermarket??null,last_price:changes.last_price??null};
    await supabaseClient.from("product_history").insert(row);
  }
  await loadLearnedProducts();
@@ -340,7 +349,7 @@ async function learnProduct(name,changes={}){
 async function insertProduct(name){
  if(!name||!currentUser)return false;
  const remembered=rememberedData(name);
- const{error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:1,Categoria:getCategory(name),Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false,price:remembered.price||null,supermarket:remembered.supermarket||""});
+ const{error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:1,Categoria:remembered.category,Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false,price:remembered.price||null,supermarket:remembered.supermarket||""});
  if(error){console.error("Error añadiendo producto:",error);alert("No se pudo añadir el producto.");return false;}
  await learnProduct(name,{incrementTimes:true});
  return true;
@@ -360,6 +369,14 @@ async function setSupermarket(index,value){
  const{error}=await supabaseClient.from("Productos").update({supermarket}).eq("id",p.id).eq("list_id",LIST_ID);
  if(!error){p.supermarket=supermarket;await learnProduct(p.name,{last_supermarket:supermarket||null});renderList();}else{console.error("Error cambiando supermercado:",error);alert("No se pudo cambiar el supermercado.");}
 }
+async function setCategory(index,value){
+ const p=products[index];if(!p||!categoryOrder.includes(value))return;
+ const{error}=await supabaseClient.from("Productos").update({Categoria:value}).eq("id",p.id).eq("list_id",LIST_ID);
+ if(error){console.error("Error cambiando categoría:",error);alert("No se pudo cambiar la categoría.");return;}
+ p.category=value;
+ await learnProduct(p.name,{category:value});
+ renderList();
+}
 async function setPrice(index){
  const p=products[index];if(!p)return;const current=p.price>0?p.price.toString().replace(".",","):"";const value=prompt(`Precio por unidad de ${p.name}:`,current);if(value===null)return;
  const normalized=Number(value.replace(",","."));if(Number.isNaN(normalized)||normalized<0){alert("Introduce un precio válido.");return;}
@@ -376,7 +393,7 @@ async function finishPurchase(){
  const totalText=total.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
  const ok=confirm(`Vas a finalizar ${bought.length} producto${bought.length===1?"":"s"} por un total registrado de ${totalText}.\n\nSe guardarán en el historial y se quitarán de la lista.\n\n¿Continuar?`);if(!ok)return;
  const button=document.getElementById("finishButton");button.disabled=true;button.textContent="Guardando compra...";
- const historyRows=bought.map(p=>({list_id:LIST_ID,user_id:currentUser.id,product_name:p.name,quantity:p.quantity,price:Number(p.price)||0,supermarket:p.supermarket||"",category:getCategory(p.name),purchased_at:new Date().toISOString()}));
+ const historyRows=bought.map(p=>({list_id:LIST_ID,user_id:currentUser.id,product_name:p.name,quantity:p.quantity,price:Number(p.price)||0,supermarket:p.supermarket||"",category:effectiveCategory(p),purchased_at:new Date().toISOString()}));
  const{error:historyError}=await supabaseClient.from("purchase_history").insert(historyRows);
  if(historyError){console.error("Error guardando historial:",historyError);alert("ERROR SUPABASE:\n"+(historyError.message||JSON.stringify(historyError)));button.disabled=false;button.textContent="🧾 Finalizar compra";return;}
  // Al finalizar, reforzamos la memoria con el último precio y supermercado realmente comprados.
@@ -401,7 +418,7 @@ async function addVoiceProduct(name,quantity){
  const existing=products.find(p=>normalizeName(p.name)===normalizeName(name)&&!p.completed);
  if(existing){const newQuantity=existing.quantity+quantity;const{error}=await supabaseClient.from("Productos").update({Cantidad:newQuantity}).eq("id",existing.id).eq("list_id",LIST_ID);if(!error)await learnProduct(name,{incrementTimes:true});return;}
  const remembered=rememberedData(name);
- const{data,error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:quantity,Categoria:getCategory(name),Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false,price:remembered.price||null,supermarket:remembered.supermarket||""}).select("id").single();
+ const{data,error}=await supabaseClient.from("Productos").insert({Nombre:name,Cantidad:quantity,Categoria:remembered.category,Comprado:false,list_id:LIST_ID,added_by:currentUser.id,favorite:false,price:remembered.price||null,supermarket:remembered.supermarket||""}).select("id").single();
  if(error){console.error("Error añadiendo por voz:",error);return;}
  if(data)await learnProduct(name,{incrementTimes:true});
 }
