@@ -91,6 +91,19 @@
     .settings-x{border:0;background:#f3f4f6;border-radius:50%;width:36px;height:36px;font-size:20px;font-weight:800}
     .settings-text{margin:0 0 16px;color:var(--muted);font-size:13px}
 
+    .pantry-settings-box{margin-top:16px;padding:14px;border-radius:16px;background:#f7fbf8;border:1px solid #d1fae5}
+    .pantry-settings-title{font-weight:900;font-size:16px;color:var(--green-dark);margin-bottom:5px}
+    .pantry-settings-text{font-size:13px;color:var(--muted);line-height:1.4;margin-bottom:12px}
+    .pantry-settings-list{display:flex;flex-direction:column;gap:8px}
+    .pantry-setting-row{display:flex;align-items:center;gap:10px;background:white;border:1px solid var(--border);border-radius:12px;padding:10px}
+    .pantry-setting-name{flex:1;min-width:0;font-weight:800;font-size:14px}
+    .pantry-setting-control{display:flex;align-items:center;gap:6px}
+    .pantry-setting-control button{width:30px;height:30px;border:0;border-radius:9px;background:var(--green-soft);color:var(--green-dark);font-size:18px;font-weight:900}
+    .pantry-setting-value{min-width:30px;text-align:center;font-weight:900}
+    .pantry-settings-empty{font-size:13px;color:var(--muted);padding:8px 2px}
+    body[data-theme="dark"] .pantry-settings-box{background:#172033;border-color:#374151}
+    body[data-theme="dark"] .pantry-settings-title{color:#dcfce7}
+    body[data-theme="dark"] .pantry-setting-row{background:#1f2937;border-color:#374151}
     .data-settings-box{margin-top:16px;padding:14px;border-radius:16px;background:#fff7f7;border:1px solid #fecaca}
     .data-settings-title{font-weight:900;font-size:16px;color:#991b1b;margin-bottom:5px}
     .data-settings-text{font-size:13px;color:var(--muted);line-height:1.4;margin-bottom:12px}
@@ -150,7 +163,7 @@
     .pantry-item{display:flex;align-items:center;gap:10px;padding:11px 1px;border-bottom:1px solid var(--border)}.pantry-item:last-child{border-bottom:0}
     .pantry-info{flex:1;min-width:0}.pantry-name{font-weight:800;font-size:15px}.pantry-state{font-size:11px;margin-top:3px;font-weight:700}.pantry-state.ok{color:var(--green-dark)}.pantry-state.low{color:#d97706}.pantry-state.out{color:#dc2626}
     .pantry-qty{display:flex;align-items:center;gap:5px}.pantry-qty button{width:29px;height:29px;border:0;border-radius:9px;background:var(--green-soft);color:var(--green-dark);font-size:18px;font-weight:900}.pantry-qty strong{min-width:24px;text-align:center}
-    .pantry-cart{border:0;background:#eef7f0;color:var(--green-dark);border-radius:9px;padding:7px 9px;font-size:15px;font-weight:900;white-space:nowrap}.pantry-delete{border:0;background:transparent;color:#9ca3af;font-size:17px;padding:5px}
+    .pantry-cart{border:0;background:#eef7f0;color:var(--green-dark);border-radius:9px;padding:7px 9px;font-size:15px;font-weight:900;white-space:nowrap}.pantry-alert{border:0;background:#fff7ed;color:#c2410c;border-radius:9px;padding:6px 8px;font-size:11px;font-weight:800;white-space:nowrap;margin-top:5px}.pantry-delete{border:0;background:transparent;color:#9ca3af;font-size:17px;padding:5px}
     .pantry-empty{background:white;border-radius:17px;padding:34px 15px;text-align:center;color:var(--muted);box-shadow:0 3px 16px rgba(0,0,0,.05)}
     body[data-theme="dark"] .main-tabs{background:#172033}body[data-theme="dark"] .main-tab{color:#d1d5db}body[data-theme="dark"] .main-tab.active,body[data-theme="dark"] .pantry-stat,body[data-theme="dark"] .pantry-add,body[data-theme="dark"] .pantry-list,body[data-theme="dark"] .pantry-empty{background:#1f2937;color:#f9fafb}body[data-theme="dark"] .pantry-category-title{color:#f3f4f6}
   </style>
@@ -221,6 +234,12 @@
       <button class="theme-option" data-theme-choice="custom" onclick="setTheme('custom')"><span class="theme-icon">⭐</span><span class="theme-name">Mi estilo</span><span class="theme-desc">Una base especial para personalizarla a tu gusto.</span></button>
     </div>
     <div class="custom-box"><div class="custom-title">⭐ Mi estilo</div><div class="custom-text">Ya puedes elegirlo. Más adelante añadiremos aquí tamaño de letra, colores, vista compacta y más opciones sin tocar la lista compartida.</div></div>
+
+    <div class="pantry-settings-box">
+      <div class="pantry-settings-title">🔔 Avisos de Despensa</div>
+      <div class="pantry-settings-text">Elige cuándo quieres que cada producto pase a “Queda poco”. Cuando llegue a ese mínimo, aparecerá el botón 🛒 Lista.</div>
+      <div id="pantryAlertSettings" class="pantry-settings-list"><div class="pantry-settings-empty">Cargando productos...</div></div>
+    </div>
 
     <div class="data-settings-box">
       <div class="data-settings-title">🧹 Datos e historial</div>
@@ -463,7 +482,7 @@ async function moveBoughtProductsToPantry(bought){
      if(updateError){console.error("Error actualizando despensa:",updateError);return false;}
      existing.quantity=quantity;
    }else{
-     const row={list_id:LIST_ID,product_name:p.name,quantity:Number(p.quantity)||1,category:effectiveCategory(p),updated_by:currentUser.id};
+     const row={list_id:LIST_ID,product_name:p.name,quantity:Number(p.quantity)||1,category:effectiveCategory(p),alert_at:1,updated_by:currentUser.id};
      const{data:created,error:insertError}=await supabaseClient.from("pantry").insert(row).select("id, product_name, quantity").single();
      if(insertError){console.error("Error añadiendo compra a despensa:",insertError);return false;}
      if(created)pantryRows.push(created);
@@ -580,15 +599,16 @@ function showMainView(view){
 function pantryState(item){
  const q=Number(item.quantity)||0;
  if(q<=0)return{key:"out",label:"🔴 Agotado"};
- if(q===1)return{key:"low",label:"🟠 Queda poco"};
+ const alertAt=Math.max(1,Number(item.alert_at)||1);
+ if(q<=alertAt)return{key:"low",label:"🟠 Queda poco"};
  return{key:"ok",label:"🟢 Tenemos"};
 }
 async function loadPantry(){
  const content=document.getElementById("pantryContent");if(!content)return;
  content.innerHTML='<div class="pantry-empty">Cargando despensa...</div>';
- const{data,error}=await supabaseClient.from("pantry").select("id, list_id, product_name, quantity, category, updated_by, updated_at").eq("list_id",LIST_ID).order("product_name",{ascending:true});
+ const{data,error}=await supabaseClient.from("pantry").select("id, list_id, product_name, quantity, category, alert_at, updated_by, updated_at").eq("list_id",LIST_ID).order("product_name",{ascending:true});
  if(error){console.error("Error cargando despensa:",error);content.innerHTML='<div class="pantry-empty">No se pudo cargar la despensa.</div>';return;}
- pantryItems=data||[];renderPantry();
+ pantryItems=data||[];renderPantry();renderPantryAlertSettings();
 }
 function renderPantry(){
  const content=document.getElementById("pantryContent");if(!content)return;
@@ -596,19 +616,41 @@ function renderPantry(){
  document.getElementById("pantryOkCount").textContent=ok;document.getElementById("pantryLowCount").textContent=low;document.getElementById("pantryOutCount").textContent=out;
  if(!pantryItems.length){content.innerHTML='<div class="pantry-empty">Tu despensa está vacía 🧺<br><small>Añade arriba lo que ya tenéis en casa.</small></div>';return;}
  const groups={};pantryItems.forEach((item,index)=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.product_name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
- content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div>${st.key==="out"?`<button class="pantry-cart" onclick="addPantryToShoppingList(${index})" aria-label="Añadir a la lista">🛒 Lista</button>`:""}<button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
+ content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div>${st.key!=="ok"?`<button class="pantry-cart" onclick="addPantryToShoppingList(${index})" aria-label="Añadir a la lista">🛒 Lista</button>`:""}<button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
 }
 async function addPantryItem(){
  const input=document.getElementById("pantryInput"),name=input.value.trim();if(!name||!currentUser)return;
  const existing=pantryItems.find(i=>normalizeName(i.product_name)===normalizeName(name));
  if(existing){const{error}=await supabaseClient.from("pantry").update({quantity:(Number(existing.quantity)||0)+1,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",existing.id).eq("list_id",LIST_ID);if(error){console.error(error);alert("No se pudo actualizar la despensa.");return;}}
- else{const remembered=rememberedData(name);const{error}=await supabaseClient.from("pantry").insert({list_id:LIST_ID,product_name:name,quantity:1,category:remembered.category||getCategory(name),updated_by:currentUser.id});if(error){console.error(error);alert("No se pudo añadir a la despensa.");return;}}
+ else{const remembered=rememberedData(name);const{error}=await supabaseClient.from("pantry").insert({list_id:LIST_ID,product_name:name,quantity:1,category:remembered.category||getCategory(name),alert_at:1,updated_by:currentUser.id});if(error){console.error(error);alert("No se pudo añadir a la despensa.");return;}}
  input.value="";input.focus();await loadPantry();
 }
 async function changePantryQuantity(index,change){
  const item=pantryItems[index];if(!item)return;const quantity=Math.max(0,(Number(item.quantity)||0)+change);
  const{error}=await supabaseClient.from("pantry").update({quantity,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
  if(error){console.error(error);alert("No se pudo cambiar la cantidad.");return;}item.quantity=quantity;renderPantry();
+}
+function renderPantryAlertSettings(){
+ const box=document.getElementById("pantryAlertSettings");if(!box)return;
+ if(!pantryItems.length){box.innerHTML='<div class="pantry-settings-empty">Añade productos a la Despensa y aparecerán aquí.</div>';return;}
+ box.innerHTML="";
+ pantryItems.forEach((item,index)=>{
+   const row=document.createElement("div");row.className="pantry-setting-row";
+   const alertAt=Math.max(1,Number(item.alert_at)||1);
+   row.innerHTML=`<div class="pantry-setting-name">${escapeHtml(item.product_name)}</div><div class="pantry-setting-control"><button onclick="changePantryAlert(${index},-1)" aria-label="Bajar aviso">−</button><span class="pantry-setting-value">${alertAt}</span><button onclick="changePantryAlert(${index},1)" aria-label="Subir aviso">+</button></div>`;
+   box.appendChild(row);
+ });
+}
+async function changePantryAlert(index,change){
+ const item=pantryItems[index];if(!item)return;
+ const current=Math.max(1,Number(item.alert_at)||1);
+ const alertAt=Math.max(1,current+change);
+ if(alertAt===current)return;
+ const{error}=await supabaseClient.from("pantry").update({alert_at:alertAt,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
+ if(error){console.error(error);alert("No se pudo guardar el aviso.");return;}
+ item.alert_at=alertAt;
+ renderPantry();
+ renderPantryAlertSettings();
 }
 async function addPantryToShoppingList(index){
  const item=pantryItems[index];if(!item||!item.product_name)return;
@@ -676,7 +718,12 @@ async function clearPurchaseHistory(){
  alert("Historial de compras borrado. Gastado este mes vuelve a 0,00 €.");
 }
 
-function openSettings(){document.getElementById("settingsOverlay").classList.add("open");setTheme(document.body.getAttribute("data-theme")||"classic",false);}
+async function openSettings(){
+ document.getElementById("settingsOverlay").classList.add("open");
+ setTheme(document.body.getAttribute("data-theme")||"classic",false);
+ await loadPantry();
+ renderPantryAlertSettings();
+}
 function closeSettings(event){if(event&&event.target!==document.getElementById("settingsOverlay"))return;document.getElementById("settingsOverlay").classList.remove("open");}
 applySavedTheme();
 
