@@ -150,7 +150,7 @@
     .pantry-item{display:flex;align-items:center;gap:10px;padding:11px 1px;border-bottom:1px solid var(--border)}.pantry-item:last-child{border-bottom:0}
     .pantry-info{flex:1;min-width:0}.pantry-name{font-weight:800;font-size:15px}.pantry-state{font-size:11px;margin-top:3px;font-weight:700}.pantry-state.ok{color:var(--green-dark)}.pantry-state.low{color:#d97706}.pantry-state.out{color:#dc2626}
     .pantry-qty{display:flex;align-items:center;gap:5px}.pantry-qty button{width:29px;height:29px;border:0;border-radius:9px;background:var(--green-soft);color:var(--green-dark);font-size:18px;font-weight:900}.pantry-qty strong{min-width:24px;text-align:center}
-    .pantry-delete{border:0;background:transparent;color:#9ca3af;font-size:17px;padding:5px}
+    .pantry-cart{border:0;background:#eef7f0;color:var(--green-dark);border-radius:9px;padding:7px 9px;font-size:15px;font-weight:900;white-space:nowrap}.pantry-delete{border:0;background:transparent;color:#9ca3af;font-size:17px;padding:5px}
     .pantry-empty{background:white;border-radius:17px;padding:34px 15px;text-align:center;color:var(--muted);box-shadow:0 3px 16px rgba(0,0,0,.05)}
     body[data-theme="dark"] .main-tabs{background:#172033}body[data-theme="dark"] .main-tab{color:#d1d5db}body[data-theme="dark"] .main-tab.active,body[data-theme="dark"] .pantry-stat,body[data-theme="dark"] .pantry-add,body[data-theme="dark"] .pantry-list,body[data-theme="dark"] .pantry-empty{background:#1f2937;color:#f9fafb}body[data-theme="dark"] .pantry-category-title{color:#f3f4f6}
   </style>
@@ -234,7 +234,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = "https://hnytuqklpuhiqeapkykx.supabase.co";
-const SUPABASE_KEY = "sb_publishable_ZcuVEC6cwbsS8kkop6oLxw_f6XVDtgN";
+const SUPABASE_KEY = "CLAVE OCULTA";
 const LIST_ID = "59d10737-51e8-4edf-9217-63e25a5f4a6b";
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let products = [], currentUser = null, learnedProducts = [], pantryItems = [];
@@ -572,7 +572,7 @@ function renderPantry(){
  document.getElementById("pantryOkCount").textContent=ok;document.getElementById("pantryLowCount").textContent=low;document.getElementById("pantryOutCount").textContent=out;
  if(!pantryItems.length){content.innerHTML='<div class="pantry-empty">Tu despensa está vacía 🧺<br><small>Añade arriba lo que ya tenéis en casa.</small></div>';return;}
  const groups={};pantryItems.forEach((item,index)=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.product_name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
- content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div><button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
+ content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div>${st.key==="out"?`<button class="pantry-cart" onclick="addPantryToShoppingList(${index})" aria-label="Añadir a la lista">🛒 Lista</button>`:""}<button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
 }
 async function addPantryItem(){
  const input=document.getElementById("pantryInput"),name=input.value.trim();if(!name||!currentUser)return;
@@ -585,6 +585,17 @@ async function changePantryQuantity(index,change){
  const item=pantryItems[index];if(!item)return;const quantity=Math.max(0,(Number(item.quantity)||0)+change);
  const{error}=await supabaseClient.from("pantry").update({quantity,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
  if(error){console.error(error);alert("No se pudo cambiar la cantidad.");return;}item.quantity=quantity;renderPantry();
+}
+async function addPantryToShoppingList(index){
+ const item=pantryItems[index];if(!item||!item.product_name)return;
+ const name=item.product_name;
+ const already=products.find(p=>normalizeName(p.name)===normalizeName(name)&&!p.completed);
+ if(already){alert(`“${name}” ya está en la lista de compra 🛒`);showMainView("list");return;}
+ const ok=await addOrIncreaseProduct(name);
+ if(!ok)return;
+ await loadProducts();
+ alert(`“${name}” añadido a la lista de compra 🛒`);
+ showMainView("list");
 }
 async function deletePantryItem(index){
  const item=pantryItems[index];if(!item)return;if(!confirm(`¿Quitar "${item.product_name}" de la despensa?`))return;
