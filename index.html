@@ -175,6 +175,22 @@
     .pantry-cart{border:0;background:#eef7f0;color:var(--green-dark);border-radius:9px;padding:7px 9px;font-size:15px;font-weight:900;white-space:nowrap}.pantry-alert{border:0;background:#fff7ed;color:#c2410c;border-radius:9px;padding:6px 8px;font-size:11px;font-weight:800;white-space:nowrap;margin-top:5px}.pantry-delete{border:0;background:transparent;color:#9ca3af;font-size:17px;padding:5px}
     .pantry-empty{background:white;border-radius:17px;padding:34px 15px;text-align:center;color:var(--muted);box-shadow:0 3px 16px rgba(0,0,0,.05)}
     body[data-theme="dark"] .main-tabs{background:#172033}body[data-theme="dark"] .main-tab{color:#d1d5db}body[data-theme="dark"] .main-tab.active,body[data-theme="dark"] .pantry-stat,body[data-theme="dark"] .pantry-add,body[data-theme="dark"] .pantry-list,body[data-theme="dark"] .pantry-empty{background:#1f2937;color:#f9fafb}body[data-theme="dark"] .pantry-category-title{color:#f3f4f6}
+
+    /* Categorías accesibles y controles cómodos en móvil. */
+    .pantry-category-head{width:100%;border:1px solid var(--border);border-radius:14px;background:var(--card);color:var(--text);padding:12px;margin-bottom:8px;text-align:left;min-height:48px}
+    .pantry-category-title{margin:0;color:inherit;overflow-wrap:anywhere}
+    .pantry-category-toggle{flex-shrink:0;padding:0 4px}
+    .pantry-category-head:focus-visible,.pantry-item button:focus-visible{outline:3px solid var(--green);outline-offset:3px}
+    .pantry-name{overflow-wrap:anywhere;line-height:1.35}
+    .pantry-qty{flex-shrink:0}.pantry-qty button,.pantry-delete,.pantry-cart{min-width:44px;min-height:44px}
+    .pantry-item button:disabled{opacity:.45;cursor:default}
+    body[data-theme="dark"] .pantry-category-count,body[data-theme="dark"] .pantry-qty button{color:#dcfce7}
+    body[data-theme="dark"] .pantry-cart{background:#164e2e;color:#dcfce7}
+    body[data-theme="dark"] .pantry-state.ok{color:#86efac}body[data-theme="dark"] .pantry-state.low{color:#fbbf24}body[data-theme="dark"] .pantry-state.out{color:#fca5a5}
+    @media(max-width:480px){
+      .pantry-item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px;padding:12px 0}
+      .pantry-info{grid-column:1 / -1}.pantry-qty{justify-self:start}.pantry-cart{grid-column:2}.pantry-delete{grid-column:3;justify-self:end}
+    }
   </style>
 </head>
 <body>
@@ -620,6 +636,8 @@ async function loadPantry(){
  if(error){console.error("Error cargando despensa:",error);content.innerHTML='<div class="pantry-empty">No se pudo cargar la despensa.</div>';return;}
  pantryItems=data||[];renderPantry();renderPantryAlertSettings();
 }
+const collapsedPantryCategories=new Set();
+const pantryQuantityPending=new Set();
 function renderPantry(){
  const content=document.getElementById("pantryContent");if(!content)return;
  let ok=0,low=0,out=0;pantryItems.forEach(i=>{const st=pantryState(i).key;if(st==="ok")ok++;else if(st==="low")low++;else out++;});
@@ -629,13 +647,32 @@ function renderPantry(){
  const visibleItems=pantryItems.map((item,index)=>({item,index})).filter(({item})=>!search||normalizeName(item.product_name).includes(search)||normalizeName(item.category||"").includes(search));
  if(!visibleItems.length){content.innerHTML=`<div class="pantry-empty">🔎 No encontramos “${escapeHtml(document.getElementById("pantrySearch")?.value.trim()||"")}” en la despensa.</div>`;return;}
  const groups={};visibleItems.forEach(({item,index})=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.product_name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
- content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";const count=groups[cat].length;sec.innerHTML=`<div class="pantry-category-head" onclick="togglePantryCategory(this)"><div class="pantry-category-head-left"><div class="pantry-category-title">${cat}</div><span class="pantry-category-count">${count}</span></div><button class="pantry-category-toggle" type="button" aria-label="Plegar categoría">⌄</button></div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div>${st.key!=="ok"?`<button class="pantry-cart" onclick="addPantryToShoppingList(${index})" aria-label="Añadir a la lista">🛒 Lista</button>`:""}<button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
+ content.innerHTML="";
+ categoryOrder.filter(c=>groups[c]).forEach(cat=>{
+   const sec=document.createElement("section");
+   const collapsed=!search&&collapsedPantryCategories.has(cat);
+   sec.className="pantry-category"+(collapsed?" collapsed":"");
+   sec.dataset.category=cat;
+   const listId="pantry-category-"+categoryOrder.indexOf(cat);
+   sec.innerHTML=`<button class="pantry-category-head" type="button" aria-expanded="${!collapsed}" aria-controls="${listId}"><span class="pantry-category-head-left"><span class="pantry-category-title">${escapeHtml(cat)}</span><span class="pantry-category-count">${groups[cat].length}</span></span><span class="pantry-category-toggle" aria-hidden="true">⌄</span></button><div class="pantry-list" id="${listId}"></div>`;
+   sec.querySelector(".pantry-category-head").onclick=event=>togglePantryCategory(event.currentTarget);
+   const list=sec.querySelector(".pantry-list");
+   groups[cat].forEach(({item,index})=>{
+     const st=pantryState(item),row=document.createElement("div"),q=Math.max(0,Number(item.quantity)||0);
+     const pending=pantryQuantityPending.has(item.id);
+     row.className="pantry-item";
+     row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button type="button" onclick="changePantryQuantity(${index},-1)" aria-label="Reducir cantidad" ${q===0||pending?"disabled":""}>−</button><strong aria-label="Cantidad">${q}</strong><button type="button" onclick="changePantryQuantity(${index},1)" aria-label="Aumentar cantidad" ${pending?"disabled":""}>+</button></div>${st.key!=="ok"?`<button type="button" class="pantry-cart" onclick="addPantryToShoppingList(${index})" aria-label="Añadir a la lista">🛒 Lista</button>`:""}<button type="button" class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;
+     list.appendChild(row);
+   });
+   content.appendChild(sec);
+ });
 }
 function togglePantryCategory(head){
  const section=head.closest(".pantry-category");if(!section)return;
- section.classList.toggle("collapsed");
- const button=section.querySelector(".pantry-category-toggle");
- if(button)button.setAttribute("aria-label",section.classList.contains("collapsed")?"Desplegar categoría":"Plegar categoría");
+ const collapsed=section.classList.toggle("collapsed");
+ if(collapsed)collapsedPantryCategories.add(section.dataset.category);
+ else collapsedPantryCategories.delete(section.dataset.category);
+ head.setAttribute("aria-expanded",String(!collapsed));
 }
 async function addPantryItem(){
  const input=document.getElementById("pantryInput"),name=input.value.trim();if(!name||!currentUser)return;
@@ -645,9 +682,16 @@ async function addPantryItem(){
  input.value="";input.focus();await loadPantry();
 }
 async function changePantryQuantity(index,change){
- const item=pantryItems[index];if(!item)return;const quantity=Math.max(0,(Number(item.quantity)||0)+change);
- const{error}=await supabaseClient.from("pantry").update({quantity,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
- if(error){console.error(error);alert("No se pudo cambiar la cantidad.");return;}item.quantity=quantity;renderPantry();
+ const item=pantryItems[index];if(!item||!currentUser||pantryQuantityPending.has(item.id))return;
+ const quantity=Math.max(0,(Number(item.quantity)||0)+change);
+ if(quantity===(Number(item.quantity)||0))return;
+ pantryQuantityPending.add(item.id);renderPantry();
+ try{
+   const{error}=await supabaseClient.from("pantry").update({quantity,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
+   if(error)throw error;
+   const current=pantryItems.find(row=>row.id===item.id);if(current)current.quantity=quantity;
+ }catch(error){console.error(error);alert("No se pudo cambiar la cantidad.");}
+ finally{pantryQuantityPending.delete(item.id);renderPantry();}
 }
 function renderPantryAlertSettings(){
  const box=document.getElementById("pantryAlertSettings");if(!box)return;
