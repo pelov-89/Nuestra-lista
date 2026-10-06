@@ -450,6 +450,28 @@ async function setPrice(index){
 }
 async function deleteProduct(index){const p=products[index];if(!p)return;const{error}=await supabaseClient.from("Productos").delete().eq("id",p.id).eq("list_id",LIST_ID);if(!error)await loadProducts();}
 
+async function moveBoughtProductsToPantry(bought){
+ if(!currentUser||!bought?.length)return true;
+ const{data,error}=await supabaseClient.from("pantry").select("id, product_name, quantity").eq("list_id",LIST_ID);
+ if(error){console.error("Error leyendo despensa al finalizar:",error);return false;}
+ const pantryRows=data||[];
+ for(const p of bought){
+   const existing=pantryRows.find(i=>normalizeName(i.product_name)===normalizeName(p.name));
+   if(existing){
+     const quantity=(Number(existing.quantity)||0)+(Number(p.quantity)||1);
+     const{error:updateError}=await supabaseClient.from("pantry").update({quantity,category:effectiveCategory(p),updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",existing.id).eq("list_id",LIST_ID);
+     if(updateError){console.error("Error actualizando despensa:",updateError);return false;}
+     existing.quantity=quantity;
+   }else{
+     const row={list_id:LIST_ID,product_name:p.name,quantity:Number(p.quantity)||1,category:effectiveCategory(p),updated_by:currentUser.id};
+     const{data:created,error:insertError}=await supabaseClient.from("pantry").insert(row).select("id, product_name, quantity").single();
+     if(insertError){console.error("Error añadiendo compra a despensa:",insertError);return false;}
+     if(created)pantryRows.push(created);
+   }
+ }
+ return true;
+}
+
 async function finishPurchase(){
  if(!currentUser)return;
  const bought=products.filter(p=>p.completed);
@@ -465,11 +487,13 @@ async function finishPurchase(){
  for(const p of bought){
    await learnProduct(p.name,{last_price:Number(p.price)||0,last_supermarket:p.supermarket||null});
  }
+ const pantryUpdated=await moveBoughtProductsToPantry(bought);
  const ids=bought.map(p=>p.id);
  const{error:deleteError}=await supabaseClient.from("Productos").delete().in("id",ids).eq("list_id",LIST_ID);
  if(deleteError){console.error("Error retirando productos:",deleteError);alert("La compra se guardó en el historial, pero no se pudieron retirar algunos productos de la lista.");}
- else alert("Compra finalizada y guardada en el historial 🧾");
- button.disabled=false;button.textContent="🧾 Finalizar compra";await Promise.all([loadProducts(),loadMonthlySpend()]);
+ else if(!pantryUpdated)alert("Compra finalizada y guardada 🧾, pero no se pudo actualizar la despensa completa.");
+ else alert("Compra finalizada 🧾 y productos añadidos a la despensa 🧺");
+ button.disabled=false;button.textContent="🧾 Finalizar compra";await Promise.all([loadProducts(),loadMonthlySpend(),loadPantry()]);
 }
 
 async function loadMonthlySpend(){
