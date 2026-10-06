@@ -158,6 +158,9 @@
     .pantry-stat.low strong{color:#d97706}.pantry-stat.out strong{color:#dc2626}.pantry-stat.ok strong{color:var(--green-dark)}
     .pantry-add{display:flex;gap:8px;padding:9px;background:white;border-radius:17px;box-shadow:0 5px 20px rgba(0,0,0,.08);margin-bottom:16px}
     .pantry-add input{border:0;min-width:0}.pantry-add button{border:0;border-radius:12px;background:var(--green);color:white;font-weight:900;padding:0 15px}
+    .pantry-search{display:flex;align-items:center;gap:9px;background:white;border:1px solid var(--border);border-radius:15px;padding:0 14px;margin:0 0 13px;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+    .pantry-search-icon{font-size:18px}.pantry-search input{width:100%;border:0;background:transparent;padding:13px 0;outline:none;font-size:15px}
+    body[data-theme="dark"] .pantry-search{background:#1f2937;border-color:#374151}body[data-theme="dark"] .pantry-search input{color:#f9fafb}
     .pantry-category{margin-bottom:18px}.pantry-category-title{font-size:16px;font-weight:900;margin:0 0 8px 4px;color:#374151}
     .pantry-list{background:white;border-radius:17px;padding:4px 12px;box-shadow:0 3px 16px rgba(0,0,0,.06)}
     .pantry-item{display:flex;align-items:center;gap:10px;padding:11px 1px;border-bottom:1px solid var(--border)}.pantry-item:last-child{border-bottom:0}
@@ -201,6 +204,7 @@
 <div id="pantryView" class="pantry-view">
   <div class="pantry-hero"><div class="pantry-hero-title">🧺 Nuestra Despensa</div><div class="pantry-hero-text">Lo que tenemos en casa, compartido y siempre al día.</div></div>
   <div class="pantry-summary"><div class="pantry-stat ok"><strong id="pantryOkCount">0</strong><span>Tenemos</span></div><div class="pantry-stat low"><strong id="pantryLowCount">0</strong><span>Queda poco</span></div><div class="pantry-stat out"><strong id="pantryOutCount">0</strong><span>Agotados</span></div></div>
+  <div class="pantry-search"><span class="pantry-search-icon">🔎</span><input id="pantrySearch" type="search" placeholder="Buscar en la despensa…" autocomplete="off" oninput="renderPantry()"></div>
   <div class="pantry-add"><input id="pantryInput" type="text" placeholder="Añadir a la despensa…" onkeydown="handlePantryKey(event)"><button onclick="addPantryItem()">Añadir</button></div>
   <div id="pantryContent"><div class="pantry-empty">Cargando despensa...</div></div>
 </div>
@@ -615,7 +619,10 @@ function renderPantry(){
  let ok=0,low=0,out=0;pantryItems.forEach(i=>{const st=pantryState(i).key;if(st==="ok")ok++;else if(st==="low")low++;else out++;});
  document.getElementById("pantryOkCount").textContent=ok;document.getElementById("pantryLowCount").textContent=low;document.getElementById("pantryOutCount").textContent=out;
  if(!pantryItems.length){content.innerHTML='<div class="pantry-empty">Tu despensa está vacía 🧺<br><small>Añade arriba lo que ya tenéis en casa.</small></div>';return;}
- const groups={};pantryItems.forEach((item,index)=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.product_name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
+ const search=normalizeName(document.getElementById("pantrySearch")?.value||"");
+ const visibleItems=pantryItems.map((item,index)=>({item,index})).filter(({item})=>!search||normalizeName(item.product_name).includes(search)||normalizeName(item.category||"").includes(search));
+ if(!visibleItems.length){content.innerHTML=`<div class="pantry-empty">🔎 No encontramos “${escapeHtml(document.getElementById("pantrySearch")?.value.trim()||"")}” en la despensa.</div>`;return;}
+ const groups={};visibleItems.forEach(({item,index})=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.product_name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
  content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div>${st.key!=="ok"?`<button class="pantry-cart" onclick="addPantryToShoppingList(${index})" aria-label="Añadir a la lista">🛒 Lista</button>`:""}<button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
 }
 async function addPantryItem(){
