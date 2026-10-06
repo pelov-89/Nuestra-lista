@@ -554,15 +554,15 @@ function showMainView(view){
  if(pantry)loadPantry();
 }
 function pantryState(item){
- const q=Number(item.quantity)||0, alertAt=Math.max(0,Number(item.alert_at)||1);
+ const q=Number(item.quantity)||0;
  if(q<=0)return{key:"out",label:"🔴 Agotado"};
- if(q<=alertAt)return{key:"low",label:"🟠 Queda poco"};
+ if(q===1)return{key:"low",label:"🟠 Queda poco"};
  return{key:"ok",label:"🟢 Tenemos"};
 }
 async function loadPantry(){
  const content=document.getElementById("pantryContent");if(!content)return;
  content.innerHTML='<div class="pantry-empty">Cargando despensa...</div>';
- const{data,error}=await supabaseClient.from("pantry").select("id, list_id, name, quantity, category, status, alert_at, created_by, created_at, updated_at").eq("list_id",LIST_ID).order("name",{ascending:true});
+ const{data,error}=await supabaseClient.from("pantry").select("id, list_id, product_name, quantity, category, updated_by, updated_at").eq("list_id",LIST_ID).order("product_name",{ascending:true});
  if(error){console.error("Error cargando despensa:",error);content.innerHTML='<div class="pantry-empty">No se pudo cargar la despensa.</div>';return;}
  pantryItems=data||[];renderPantry();
 }
@@ -571,23 +571,23 @@ function renderPantry(){
  let ok=0,low=0,out=0;pantryItems.forEach(i=>{const st=pantryState(i).key;if(st==="ok")ok++;else if(st==="low")low++;else out++;});
  document.getElementById("pantryOkCount").textContent=ok;document.getElementById("pantryLowCount").textContent=low;document.getElementById("pantryOutCount").textContent=out;
  if(!pantryItems.length){content.innerHTML='<div class="pantry-empty">Tu despensa está vacía 🧺<br><small>Añade arriba lo que ya tenéis en casa.</small></div>';return;}
- const groups={};pantryItems.forEach((item,index)=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
- content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div><button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
+ const groups={};pantryItems.forEach((item,index)=>{const cat=categoryOrder.includes(item.category)?item.category:getCategory(item.product_name);if(!groups[cat])groups[cat]=[];groups[cat].push({item,index});});
+ content.innerHTML="";categoryOrder.filter(c=>groups[c]).forEach(cat=>{const sec=document.createElement("section");sec.className="pantry-category";sec.innerHTML=`<div class="pantry-category-title">${cat}</div><div class="pantry-list"></div>`;const list=sec.querySelector(".pantry-list");groups[cat].forEach(({item,index})=>{const st=pantryState(item),row=document.createElement("div");row.className="pantry-item";row.innerHTML=`<div class="pantry-info"><div class="pantry-name">${escapeHtml(item.product_name)}</div><div class="pantry-state ${st.key}">${st.label}</div></div><div class="pantry-qty"><button onclick="changePantryQuantity(${index},-1)">−</button><strong>${Number(item.quantity)||0}</strong><button onclick="changePantryQuantity(${index},1)">+</button></div><button class="pantry-delete" onclick="deletePantryItem(${index})" aria-label="Borrar">🗑️</button>`;list.appendChild(row);});sec.appendChild(list);content.appendChild(sec);});
 }
 async function addPantryItem(){
  const input=document.getElementById("pantryInput"),name=input.value.trim();if(!name||!currentUser)return;
- const existing=pantryItems.find(i=>normalizeName(i.name)===normalizeName(name));
- if(existing){const{error}=await supabaseClient.from("pantry").update({quantity:(Number(existing.quantity)||0)+1,updated_at:new Date().toISOString()}).eq("id",existing.id).eq("list_id",LIST_ID);if(error){console.error(error);alert("No se pudo actualizar la despensa.");return;}}
- else{const remembered=rememberedData(name);const{error}=await supabaseClient.from("pantry").insert({list_id:LIST_ID,name,quantity:1,category:remembered.category||getCategory(name),status:"ok",alert_at:1,created_by:currentUser.id});if(error){console.error(error);alert("No se pudo añadir a la despensa.");return;}}
+ const existing=pantryItems.find(i=>normalizeName(i.product_name)===normalizeName(name));
+ if(existing){const{error}=await supabaseClient.from("pantry").update({quantity:(Number(existing.quantity)||0)+1,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",existing.id).eq("list_id",LIST_ID);if(error){console.error(error);alert("No se pudo actualizar la despensa.");return;}}
+ else{const remembered=rememberedData(name);const{error}=await supabaseClient.from("pantry").insert({list_id:LIST_ID,product_name:name,quantity:1,category:remembered.category||getCategory(name),updated_by:currentUser.id});if(error){console.error(error);alert("No se pudo añadir a la despensa.");return;}}
  input.value="";input.focus();await loadPantry();
 }
 async function changePantryQuantity(index,change){
- const item=pantryItems[index];if(!item)return;const quantity=Math.max(0,(Number(item.quantity)||0)+change),state=quantity<=0?"out":quantity<=Math.max(0,Number(item.alert_at)||1)?"low":"ok";
- const{error}=await supabaseClient.from("pantry").update({quantity,status:state,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
- if(error){console.error(error);alert("No se pudo cambiar la cantidad.");return;}item.quantity=quantity;item.status=state;renderPantry();
+ const item=pantryItems[index];if(!item)return;const quantity=Math.max(0,(Number(item.quantity)||0)+change);
+ const{error}=await supabaseClient.from("pantry").update({quantity,updated_by:currentUser.id,updated_at:new Date().toISOString()}).eq("id",item.id).eq("list_id",LIST_ID);
+ if(error){console.error(error);alert("No se pudo cambiar la cantidad.");return;}item.quantity=quantity;renderPantry();
 }
 async function deletePantryItem(index){
- const item=pantryItems[index];if(!item)return;if(!confirm(`¿Quitar "${item.name}" de la despensa?`))return;
+ const item=pantryItems[index];if(!item)return;if(!confirm(`¿Quitar "${item.product_name}" de la despensa?`))return;
  const{error}=await supabaseClient.from("pantry").delete().eq("id",item.id).eq("list_id",LIST_ID);if(error){console.error(error);alert("No se pudo borrar de la despensa.");return;}await loadPantry();
 }
 function handlePantryKey(event){if(event.key==="Enter")addPantryItem();}
