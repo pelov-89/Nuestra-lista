@@ -222,7 +222,9 @@ body[data-theme="visual"] .user-bar{box-shadow:none;background:transparent;paddi
 body[data-theme="notes"] .settings-panel{background:#fffdf5;box-shadow:none;border-radius:16px}body[data-theme="notes"] .settings-section,body[data-theme="notes"] .pantry-settings-box{border:0;border-radius:0;background:transparent;padding:12px 0;border-bottom:1px solid var(--border)}body[data-theme="notes"] .theme-grid{display:flex;flex-direction:column;gap:0}body[data-theme="notes"] .theme-option{border:0;border-bottom:1px solid var(--border);border-radius:0;background:transparent;padding:10px}body[data-theme="notes"] .theme-option.active{box-shadow:none;background:#eaf3e9}body[data-theme="notes"] .theme-icon{font-size:19px;float:left;margin-right:10px}body[data-theme="notes"] .theme-name{font-size:14px;margin:0}body[data-theme="notes"] .theme-desc{margin-left:30px}
 body[data-theme="visual"] .pantry-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;box-shadow:none;background:transparent;padding:0}body[data-theme="visual"] .pantry-item{display:flex;flex-direction:column;align-items:stretch;gap:7px;background:white;border:0;margin:0;padding:12px;border-radius:16px}body[data-theme="visual"] .pantry-item .product-thumbnail{display:grid;width:100%;height:85px;font-size:40px}body[data-theme="visual"] .pantry-item .pantry-name{font-size:14px}body[data-theme="visual"] .pantry-qty{justify-content:space-between}body[data-theme="visual"] .pantry-qty button{min-width:32px;min-height:38px}body[data-theme="visual"] .pantry-cart{font-size:12px}body[data-theme="visual"] .pantry-delete{align-self:flex-end;min-height:35px}
 body[data-theme="modern"] .pantry-hero{background:transparent;color:var(--text);box-shadow:none;padding:6px 0}body[data-theme="modern"] .pantry-hero-title{font-size:25px}body[data-theme="modern"] .pantry-hero-text{color:var(--muted)}body[data-theme="modern"] .pantry-stat{box-shadow:none;border:1px solid var(--border)}body[data-theme="modern"] .pantry-category-head{border:0;background:transparent;margin:6px 0;padding:8px 0}body[data-theme="modern"] .pantry-list{border:1px solid var(--border);box-shadow:none}body[data-theme="modern"] .pantry-add,body[data-theme="modern"] .pantry-search{box-shadow:none;border:1px solid var(--border)}body[data-theme="modern"] .settings-section{background:#f8fafc;border:1px solid #e0e7ef}
-  </style>
+  
+.notes-finish-area{display:none}body[data-theme="notes"] .notes-finish-area{display:block;margin:16px 0 20px}body[data-theme="notes"] .notes-finish-area .finish-button{width:100%;border-radius:12px;font-size:15px;padding:12px}body[data-theme="notes"] .notes-finish-area .finish-help{font-size:12px;margin-top:7px}
+</style>
 </head>
 <body>
 <header><h1>🛒 Nuestra Lista</h1><div class="subtitle">La compra, juntos y sin olvidos.</div></header>
@@ -253,6 +255,7 @@ body[data-theme="modern"] .pantry-hero{background:transparent;color:var(--text);
 <div class="finish-area"><button id="finishButton" class="finish-button" onclick="finishPurchase()">🧾 Finalizar compra</button><div class="finish-help">Guarda en el historial y retira los productos marcados ✓</div></div><button class="history-button" onclick="toggleHistory()">🧾 Ver historial de compras</button><section id="historyPanel" class="history-panel"><div class="history-header"><span class="history-title">🧾 Historial de compras</span><button class="history-close" onclick="toggleHistory(false)">Cerrar</button></div><div id="historyContent"></div></section>
 <section id="quickSection" class="quick-section"><div class="quick-header"><span class="quick-title">⭐ Habituales</span><span class="quick-subtitle">Toca para añadir</span></div><div id="quickProducts" class="quick-products"></div></section>
 <div id="shoppingList"><div class="list"><div class="loading">Cargando lista...</div></div></div>
+<div class="notes-finish-area"><button id="notesFinishButton" class="finish-button" onclick="finishPurchase()">🧾 Finalizar compra</button><div class="finish-help">Guarda la compra y retira los productos marcados ✓.</div></div>
 </div>
 <div id="pantryView" class="pantry-view">
   <div class="pantry-hero"><div class="pantry-hero-title">🧺 Nuestra Despensa</div><div class="pantry-hero-text">Lo que tenemos en casa, compartido y siempre al día.</div></div>
@@ -555,17 +558,20 @@ async function moveBoughtProductsToPantry(bought){
  return true;
 }
 
+function setFinishPurchaseBusy(busy){
+ ["finishButton","notesFinishButton"].forEach(id=>{const button=document.getElementById(id);if(button){button.disabled=busy;button.textContent=busy?"Guardando compra...":"🧾 Finalizar compra";}});
+}
 async function finishPurchase(){
- if(!currentUser)return;
+ if(!currentUser||document.getElementById("finishButton").disabled)return;
  const bought=products.filter(p=>p.completed);
  if(!bought.length){alert("Marca con ✓ los productos comprados antes de finalizar la compra.");return;}
  const total=bought.reduce((sum,p)=>sum+((Number(p.price)||0)*p.quantity),0);
  const totalText=total.toLocaleString("es-ES",{style:"currency",currency:"EUR"});
  const ok=confirm(`Vas a finalizar ${bought.length} producto${bought.length===1?"":"s"} por un total registrado de ${totalText}.\n\nSe guardarán en el historial y se quitarán de la lista.\n\n¿Continuar?`);if(!ok)return;
- const button=document.getElementById("finishButton");button.disabled=true;button.textContent="Guardando compra...";
+ setFinishPurchaseBusy(true);
  const historyRows=bought.map(p=>({list_id:LIST_ID,user_id:currentUser.id,product_name:p.name,quantity:p.quantity,price:Number(p.price)||0,supermarket:p.supermarket||"",category:effectiveCategory(p),purchased_at:new Date().toISOString()}));
  const{error:historyError}=await supabaseClient.from("purchase_history").insert(historyRows);
- if(historyError){console.error("Error guardando historial:",historyError);alert("ERROR SUPABASE:\n"+(historyError.message||JSON.stringify(historyError)));button.disabled=false;button.textContent="🧾 Finalizar compra";return;}
+ if(historyError){console.error("Error guardando historial:",historyError);alert("ERROR SUPABASE:\n"+(historyError.message||JSON.stringify(historyError)));setFinishPurchaseBusy(false);return;}
  // Al finalizar, reforzamos la memoria con el último precio y supermercado realmente comprados.
  for(const p of bought){
    await learnProduct(p.name,{last_price:Number(p.price)||0,last_supermarket:p.supermarket||null});
@@ -576,7 +582,7 @@ async function finishPurchase(){
  if(deleteError){console.error("Error retirando productos:",deleteError);alert("La compra se guardó en el historial, pero no se pudieron retirar algunos productos de la lista.");}
  else if(!pantryUpdated)alert("Compra finalizada y guardada 🧾, pero no se pudo actualizar la despensa completa.");
  else alert("Compra finalizada 🧾 y productos añadidos a la despensa 🧺");
- button.disabled=false;button.textContent="🧾 Finalizar compra";await Promise.all([loadProducts(),loadMonthlySpend(),loadPantry()]);
+ setFinishPurchaseBusy(false);await Promise.all([loadProducts(),loadMonthlySpend(),loadPantry()]);
 }
 
 async function loadMonthlySpend(){
@@ -896,3 +902,4 @@ startApp();
 </script>
 </body>
 </html>
+
