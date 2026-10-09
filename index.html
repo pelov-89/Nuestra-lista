@@ -77,9 +77,19 @@
     .favorite-button.active { color:var(--yellow); }
     .delete-button { color:#9ca3af; }
     .empty,.loading { padding:40px 10px; text-align:center; color:var(--muted); }
-    .supermarket-section { margin-bottom:24px; }
-    .supermarket-title { margin:0 0 12px; width:100%; padding:11px 14px; font-size:19px; font-weight:900; letter-spacing:.8px; text-transform:uppercase; color:#991b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:12px; }
+    .supermarket-section { margin-bottom:24px; scroll-margin-top:14px; }
+    .supermarket-title { margin:0 0 12px; width:100%; padding:11px 14px; font-size:19px; font-weight:900; letter-spacing:.8px; text-transform:uppercase; color:#991b1b; background:#fee2e2; border:1px solid #fecaca; border-radius:12px; cursor:pointer; user-select:none; -webkit-tap-highlight-color:transparent; }
     .supermarket-select { border:0; border-radius:8px; padding:6px 7px; background:#eef7f0; color:#374151; font-size:12px; max-width:145px; }
+
+    /* Vista panorámica: pellizca la lista para alejarla y toca una tienda para volver a ella. */
+    #shoppingList { transform-origin:top left; touch-action:pan-y; will-change:transform; }
+    #shoppingList.shopping-panorama .supermarket-section .category,
+    #shoppingList.shopping-panorama .supermarket-section .store-flat-list { display:none !important; }
+    #shoppingList.shopping-panorama .supermarket-section { margin-bottom:10px; }
+    #shoppingList.shopping-panorama .supermarket-title,
+    #shoppingList.shopping-panorama .route-store-button { margin-bottom:0; box-shadow:0 3px 12px rgba(0,0,0,.10); }
+    .supermarket-title.store-focus-flash,.route-store-button.store-focus-flash { animation:storeFocusFlash .85s ease; }
+    @keyframes storeFocusFlash { 0%,100%{filter:none} 35%{filter:brightness(1.14);box-shadow:0 0 0 4px rgba(34,197,94,.22)} }
     .history-button{width:100%;margin:8px 0 18px;border:1px solid #bbf7d0;border-radius:14px;padding:12px 16px;background:white;color:var(--green-dark);font-size:14px;font-weight:800}.history-panel{display:none;margin:0 0 22px;background:white;border-radius:18px;padding:14px;box-shadow:0 3px 16px rgba(0,0,0,.06)}.history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.history-title{font-size:18px;font-weight:800}.history-close{border:0;border-radius:10px;background:#f3f4f6;padding:8px 10px;font-weight:700}.history-purchase{border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px}.history-date{font-weight:800}.history-total{color:var(--green-dark);font-weight:800;margin-top:3px}.history-item{display:flex;justify-content:space-between;gap:12px;padding-top:8px;margin-top:8px;border-top:1px solid #f3f4f6;font-size:13px}.history-item-meta{color:var(--muted);font-size:11px;margin-top:2px}.history-item-price{white-space:nowrap;font-weight:700}.history-purchase{position:relative;padding-right:48px}.history-delete{position:absolute;top:10px;right:10px;width:30px;height:30px;border:0;border-radius:50%;background:#fee2e2;color:#b91c1c;font-size:18px;font-weight:900;line-height:30px;padding:0}.history-supermarket{margin:10px -2px 2px;padding:7px 10px;border-radius:9px;background:#fee2e2;border:1px solid #fecaca;color:#991b1b;font-size:12px;font-weight:900;letter-spacing:.6px;text-transform:uppercase}
 
     .settings-button{border:0;background:#eef7f0;color:var(--green-dark);border-radius:10px;padding:8px 10px;font-weight:800;margin-left:auto;margin-right:6px}
@@ -363,6 +373,60 @@ function getCategory(product) {
 }
 function escapeHtml(text){const d=document.createElement("div");d.textContent=text||"";return d.innerHTML;}
 function normalizeName(text){return(text||"").trim().toLowerCase();}
+
+/* Zoom táctil de la lista de supermercados. */
+let shoppingZoomScale=1,shoppingPinching=false,shoppingPinchStartDistance=0,shoppingPinchStartScale=1,shoppingSuppressClickUntil=0;
+function shoppingTouchDistance(touches){
+ const dx=touches[0].clientX-touches[1].clientX,dy=touches[0].clientY-touches[1].clientY;
+ return Math.hypot(dx,dy);
+}
+function applyShoppingZoom(scale,animate=false){
+ const list=document.getElementById("shoppingList");if(!list)return;
+ shoppingZoomScale=Math.max(.42,Math.min(1.28,Number(scale)||1));
+ const panorama=shoppingZoomScale<=.62;
+ list.classList.toggle("shopping-panorama",panorama);
+ list.style.transition=animate?"transform .22s ease, margin-bottom .22s ease":"none";
+ list.style.width=(100/shoppingZoomScale)+"%";
+ list.style.transform=`scale(${shoppingZoomScale})`;
+ requestAnimationFrame(()=>{
+  const naturalHeight=list.scrollHeight||0;
+  list.style.marginBottom=(-(naturalHeight*(1-shoppingZoomScale)))+"px";
+ });
+}
+function resetShoppingZoom(animate=true){applyShoppingZoom(1,animate);}
+function refreshShoppingZoomLayout(){requestAnimationFrame(()=>applyShoppingZoom(shoppingZoomScale,false));}
+function focusSupermarketSection(section){
+ if(!section||Date.now()<shoppingSuppressClickUntil)return;
+ if(shoppingZoomScale<.98){
+  resetShoppingZoom(true);
+  setTimeout(()=>{
+   section.scrollIntoView({behavior:"smooth",block:"start"});
+   const title=section.querySelector(".supermarket-title,.route-store-button");
+   if(title){title.classList.add("store-focus-flash");setTimeout(()=>title.classList.remove("store-focus-flash"),900);}
+  },240);
+ }
+}
+function initShoppingPinchZoom(){
+ const list=document.getElementById("shoppingList");if(!list||list.dataset.pinchReady==="1")return;
+ list.dataset.pinchReady="1";
+ list.addEventListener("touchstart",event=>{
+  if(event.touches.length!==2)return;
+  shoppingPinching=true;shoppingPinchStartDistance=shoppingTouchDistance(event.touches);shoppingPinchStartScale=shoppingZoomScale;
+ },{passive:true});
+ list.addEventListener("touchmove",event=>{
+  if(!shoppingPinching||event.touches.length!==2||!shoppingPinchStartDistance)return;
+  event.preventDefault();
+  const distance=shoppingTouchDistance(event.touches);
+  applyShoppingZoom(shoppingPinchStartScale*(distance/shoppingPinchStartDistance),false);
+ },{passive:false});
+ list.addEventListener("touchend",event=>{
+  if(!shoppingPinching)return;
+  if(event.touches.length<2){shoppingPinching=false;shoppingSuppressClickUntil=Date.now()+180;if(Math.abs(shoppingZoomScale-1)<.04)resetShoppingZoom(true);}
+ },{passive:true});
+ list.addEventListener("touchcancel",()=>{shoppingPinching=false;},{passive:true});
+ list.addEventListener("gesturestart",event=>event.preventDefault(),{passive:false});
+}
+
 function getLearned(name){return learnedProducts.find(x=>normalizeName(x.product_name)===normalizeName(name));}
 function getPreset(name){return presetProducts.find(x=>normalizeName(x.name)===normalizeName(name));}
 function rememberedData(name){
@@ -445,13 +509,16 @@ async function hideQuickProduct(name){
 
 function renderList(){
  const list=document.getElementById("shoppingList");list.innerHTML="";updateSummary();
- if(!products.length){list.innerHTML='<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';finishListLayout();if(document.getElementById("settingsOverlay").classList.contains("open"))renderSettingsProducts();return;}
+ if(!products.length){list.innerHTML='<div class="list"><div class="empty">Tu lista está vacía 🛒</div></div>';finishListLayout();refreshShoppingZoomLayout();if(document.getElementById("settingsOverlay").classList.contains("open"))renderSettingsProducts();return;}
  const groups={};
  products.forEach((product,index)=>{const supermarket=(product.supermarket||"").trim()||"Sin asignar";const category=effectiveCategory(product);if(!groups[supermarket])groups[supermarket]={};if(!groups[supermarket][category])groups[supermarket][category]=[];groups[supermarket][category].push({product,index});});
  const supermarketOrder=[...supermarkets,...Object.keys(groups).filter(x=>!supermarkets.includes(x))];
  supermarketOrder.filter(s=>groups[s]).forEach(supermarket=>{
-   const supermarketBox=document.createElement("section");supermarketBox.className="supermarket-section";supermarketBox.innerHTML=`<div class="supermarket-title">🏪 ${escapeHtml(supermarket.toUpperCase())}</div>`;
-   if(normalizeName(supermarket)==="mercadona"){const title=supermarketBox.querySelector(".supermarket-title");title.innerHTML='<span class="market-mark"><span class="market-symbol" aria-hidden="true">🧺</span>MERCADONA</span>';}
+   const supermarketBox=document.createElement("section");supermarketBox.className="supermarket-section";supermarketBox.dataset.supermarket=supermarket;supermarketBox.innerHTML=`<div class="supermarket-title" role="button" tabindex="0" aria-label="Abrir ${escapeHtml(supermarket)}">🏪 ${escapeHtml(supermarket.toUpperCase())}</div>`;
+   const supermarketTitle=supermarketBox.querySelector(".supermarket-title");
+   supermarketTitle.onclick=()=>focusSupermarketSection(supermarketBox);
+   supermarketTitle.onkeydown=event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();focusSupermarketSection(supermarketBox);}};
+   if(normalizeName(supermarket)==="mercadona")supermarketTitle.innerHTML='<span class="market-mark"><span class="market-symbol" aria-hidden="true">🧺</span>MERCADONA</span>';
    const categoryGroups=groups[supermarket];
    categoryOrder.filter(c=>categoryGroups[c]).forEach(category=>{
      const box=document.createElement("div");box.className="category";box.innerHTML=`<div class="category-title">${category}</div><div class="list"></div>`;const categoryList=box.querySelector(".list");
@@ -471,6 +538,7 @@ function renderList(){
    });list.appendChild(supermarketBox);
  });
  finishListLayout();
+ refreshShoppingZoomLayout();
  if(document.getElementById("settingsOverlay").classList.contains("open"))renderSettingsProducts();
 }
 function showSuggestions(){
@@ -664,7 +732,7 @@ function showMainView(view){
  document.getElementById("pantryView").classList.toggle("active",pantry);
  document.getElementById("listTab").classList.toggle("active",!pantry);
  document.getElementById("pantryTab").classList.toggle("active",pantry);
- if(pantry)loadPantry();
+ if(pantry){resetShoppingZoom(false);loadPantry();}
 }
 function pantryState(item){
  const q=Number(item.quantity)||0;
@@ -876,7 +944,7 @@ function finishListLayout(){
  }
  if(theme==="modern"||theme==="dark")list.querySelectorAll(".supermarket-section").forEach(section=>{
    const rows=[...section.querySelectorAll(".item")],body=document.createElement("div");body.className="list store-flat-list";rows.forEach(row=>body.appendChild(row));section.querySelectorAll(".category").forEach(n=>n.remove());section.appendChild(body);
-   if(theme==="dark"){const title=section.querySelector(".supermarket-title"),button=document.createElement("button");button.className="route-store-button";button.type="button";button.setAttribute("aria-expanded","true");button.textContent=title.textContent+" · "+rows.length+" productos ▾";button.onclick=()=>{body.hidden=!body.hidden;button.setAttribute("aria-expanded",String(!body.hidden));};title.replaceWith(button);}
+   if(theme==="dark"){const title=section.querySelector(".supermarket-title"),button=document.createElement("button");button.className="route-store-button";button.type="button";button.setAttribute("aria-expanded","true");button.textContent=title.textContent+" · "+rows.length+" productos ▾";button.onclick=()=>{if(shoppingZoomScale<.98){focusSupermarketSection(section);return;}body.hidden=!body.hidden;button.setAttribute("aria-expanded",String(!body.hidden));};title.replaceWith(button);}
  });
  const count=products.filter(p=>p.completed).length,total=products.length;
  document.getElementById("modernProgressText").textContent=count+" de "+total+" comprados";document.getElementById("modernProgressFill").style.width=(total?100*count/total:0)+"%";
@@ -898,6 +966,7 @@ supabaseClient.channel("productos-realtime").on("postgres_changes",{event:"*",sc
 supabaseClient.channel("pantry-realtime").on("postgres_changes",{event:"*",schema:"public",table:"pantry",filter:`list_id=eq.${LIST_ID}`},()=>loadPantry()).subscribe();
 supabaseClient.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT"){products=[];learnedProducts=[];currentUser=null;showLogin();}});
 document.addEventListener("click",event=>{const area=document.querySelector(".add-area");if(area&&!area.contains(event.target))document.getElementById("suggestions").style.display="none";});
+initShoppingPinchZoom();
 startApp();
 </script>
 </body>
